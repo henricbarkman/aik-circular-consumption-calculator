@@ -1,6 +1,8 @@
-# Circular Consumption Calculator (Demi map)
+# AIK Circular Consumption Calculator (Demi map)
 
-Repo: [henricbarkman/circular-consumption-calculator](https://github.com/henricbarkman/circular-consumption-calculator)
+Repo: [henricbarkman/aik-circular-consumption-calculator](https://github.com/henricbarkman/aik-circular-consumption-calculator)
+
+AIK-delprojekt (AI för klimatet).
 
 ## What this is
 
