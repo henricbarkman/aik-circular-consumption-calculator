@@ -78,9 +78,12 @@ export function mass(kg) {
 export function massRange(lowKg, highKg) {
   const big = Math.max(Math.abs(lowKg), Math.abs(highKg)) >= 1000;
   if (!big) return `${nf(0).format(Math.round(lowKg))}–${nf(0).format(Math.round(highKg))} kg`;
+  // Small ends keep two decimals, so 22 kg reads 0,02 ton and never a bare 0.
   const f = (kg) => {
     const t = kg / 1000;
-    return Math.abs(t) >= 100 ? nf(0).format(Math.round(t)) : nf(1).format(t);
+    const a = Math.abs(t);
+    if (a >= 100) return nf(0).format(Math.round(t));
+    return nf(a >= 1 ? 1 : 2).format(t);
   };
   return `${f(lowKg)}–${f(highKg)} ton`;
 }

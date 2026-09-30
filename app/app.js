@@ -8,7 +8,7 @@ const catById = Object.fromEntries(CATEGORIES.map((c) => [c.id, c]));
 
 const state = {
   count: 1200,
-  category: 'mobler',
+  category: 'klader',
   method: 'secondhand',
   transportOn: true,
   opsOn: true,
@@ -179,9 +179,9 @@ function editor(name) {
 function provenanceText(f) {
   const def = f.def;
   const base = (() => {
-    if (def.kind === 'source' && def.source) {
-      const s = def.source;
-      return `<span class="kind">Källa:</span> <a href="${s.url}" target="_blank" rel="noopener">${s.title}</a>, ${s.org} ${s.year}.${def.note ? ` ${def.note}` : ''}`;
+    if (def.kind === 'source' && def.sources?.length) {
+      const list = def.sources.map((s) => `<a href="${s.url}" target="_blank" rel="noopener">${s.title}</a>, ${s.org} ${s.year}`).join('; ');
+      return `<span class="kind">${def.sources.length > 1 ? 'Källor' : 'Källa'}:</span> ${list}.${def.note ? ` ${def.note}` : ''}`;
     }
     if (def.kind === 'assumption') return `<span class="kind">Antagande i metoden.</span> ${def.why ?? ''}`;
     return `<span class="kind">Exempelvärde.</span> Här ska en källa in innan verktyget publiceras.${def.why ? ` ${def.why}` : ''}`;
@@ -209,7 +209,7 @@ function renderResult(res) {
   const lca = field('lca').value;
   const [figure, unit] = splitUnit(massRange(res.low.net, res.high.net));
   $('out-figure').innerHTML = `${figure}<span class="unit">${unit}</span>`;
-  $('out-note').innerHTML = `Spannet finns för att ${c.singular} kan ge allt från <strong>${num(lca.low)}</strong> till <strong>${num(lca.high)} kg</strong> när den tillverkas. Vi räknar med båda ändarna hela vägen, i stället för ett snitt som döljer osäkerheten.`;
+  $('out-note').innerHTML = `Spannet finns för att ${c.singular} ger allt från <strong>${num(lca.low)}</strong> till <strong>${num(lca.high)} kg</strong>, beroende på vad det är. Vi räknar med båda ändarna hela vägen, i stället för ett snitt som döljer osäkerheten.`;
   const neg = $('out-negative');
   if (res.low.net < 0) {
     neg.hidden = false;
@@ -293,7 +293,7 @@ function renderSteps(res) {
     {
       name: 'lca',
       title: `Utsläppen från ${c.singular}`,
-      body: `<p class="equation">${Singular} ger ${chip('lca')} koldioxidekvivalenter, från råvara till färdig produkt.</p>
+      body: `<p class="equation">${Singular} ger ${chip('lca')} koldioxidekvivalenter.</p>
         <p>${c.spread}</p>`,
       editors: ['lca'],
     },
@@ -447,7 +447,7 @@ function plainText() {
   const src = (n) => {
     const x = f(n);
     if (x.kind === 'user') return 'eget värde';
-    if (x.kind === 'source' && x.def.source) return `källa: ${x.def.source.org} ${x.def.source.year}, ${x.def.source.url}`;
+    if (x.kind === 'source' && x.def.sources?.length) return `källa: ${x.def.sources.map((q) => `${q.org} ${q.year}, ${q.url}`).join('; ')}`;
     if (x.kind === 'assumption') return 'antagande i metoden';
     return 'exempelvärde utan källa';
   };
