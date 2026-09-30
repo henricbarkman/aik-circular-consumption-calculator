@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Klimatnyttan av cirkulär konsumtion | Henric Barkman</title>
+  <title>CCC, Circular Consumption Calculator | Henric Barkman</title>
   <meta name="description" content="Räkna ut hur mycket utsläpp second hand, uthyrning och utlåning undviker. Varje steg i uträkningen syns och går att ändra.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,22 +13,23 @@
 <body>
   <div class="wrap topline">
     <a href="https://henricbarkman.se">Henric Barkman</a>
-    <span>Klimatnyttan av cirkulär konsumtion</span>
+    <span><b>CCC</b><span class="topline-long"> Circular Consumption Calculator</span></span>
   </div>
 
   <main>
-    <section class="wrap ask" aria-label="Vad vill du räkna på?">
+    <div class="wrap workspace">
+    <section class="ask" aria-label="Vad vill du räkna på?">
       <h1>
         Hos oss har
         <label class="visually-hidden" for="in-count">Antal</label><input class="slot" id="in-count" type="number" inputmode="numeric" min="1" step="1">
         <label class="visually-hidden" for="in-cat">Vad</label><select class="slot" id="in-cat"></select>
         <label class="visually-hidden" for="in-method">Hur</label><select class="slot" id="in-method"></select>.
       </h1>
-      <p class="ask-sub">Vad betydde det för klimatet? Svaret står här nedanför. Alla tal i uträkningen går att öppna, se källan till och byta mot era egna.</p>
+      <p class="ask-sub">Vad betydde det för klimatet? Alla tal i uträkningen går att öppna, se källan till och byta mot era egna.</p>
     </section>
 
-    <section class="result" aria-live="polite" aria-atomic="true">
-      <div class="wrap">
+    <aside class="result" aria-live="polite" aria-atomic="true">
+      <div class="result-inner">
         <div>
           <p class="result-figure" id="out-figure"></p>
           <p class="result-caption">koldioxidekvivalenter som inte släpptes ut.</p>
@@ -42,16 +43,16 @@
           </div>
         </div>
       </div>
-    </section>
+    </aside>
 
-    <section class="wrap flow" aria-labelledby="flow-h">
+    <section class="flow" aria-labelledby="flow-h">
       <h2 id="flow-h">Från största möjliga nytta till netto</h2>
       <p class="flow-intro" id="flow-intro"></p>
       <ul class="legend" id="legend"></ul>
       <div class="bars" id="bars"></div>
     </section>
 
-    <section class="wrap steps" aria-labelledby="steps-h">
+    <section class="steps" aria-labelledby="steps-h">
       <div class="steps-head">
         <h2 id="steps-h">Så räknade vi</h2>
         <ul class="provenance" aria-label="Vad märkena betyder">
@@ -62,6 +63,7 @@
       </div>
       <ol class="step-list" id="steps"></ol>
     </section>
+    </div>
 
     <section class="wrap sources" aria-labelledby="src-h">
       <h2 id="src-h">Källor och antaganden</h2>
@@ -90,7 +92,7 @@
 
   <footer class="site">
     <div class="wrap">
-      <p>Metoden togs fram av Henric Barkman för Swinga 2024, först som en chattbot. Det här är samma metod, uträknad i öppen kod så att alla kan granska den.</p>
+      <p>Byggd av Henric Barkman. Uträkningen är öppen kod, så att alla kan granska den.</p>
       <p><a href="https://github.com/henricbarkman/aik-circular-consumption-calculator">Källkoden på GitHub</a></p>
     </div>
   </footer>

@@ -1,37 +1,29 @@
-# Circular Consumption Calculator
+# CCC, Circular Consumption Calculator
 
-Tool that calculates the climate-impact savings from circulating products (borrowing, renting, second-hand) instead of buying new. Created by [Swinga](https://swinga.coop) — open source.
+A transparent calculator for the climate benefit of circular consumption: second-hand, rental and lending instead of buying new. Every number in the calculation can be opened, traced to its source and replaced with your own. By Henric Barkman.
 
-## Status
+## Run it
 
-Early stage. The calculator currently exists as a Custom GPT on ChatGPT:
+The app is static, with no build step. Serve `app/` with any web server:
 
-- **Live**: [chatgpt.com/g/g-8E20qS8aO-circular-consumption-calculator](https://chat.openai.com/g/g-8E20qS8aO-circular-consumption-calculator)
-- **Beta variant**: [chatgpt.com/g/g-8E20qS8a0-circular-consumption-calculator-beta](https://chatgpt.com/g/g-8E20qS8a0-circular-consumption-calculator-beta)
-- **Landing page**: [swinga.coop/calculator](https://swinga.coop/calculator)
+```
+cd app && python3 -m http.server 8765
+```
 
-The methodology is documented in [docs/PROMPT.md](docs/PROMPT.md) — that's the full prompt that drives the Custom GPT, written so a calculator implementation in any framework can follow the same steps.
+Tests: `node --test tests/*.test.mjs`
 
-## Goal
+## Method in brief
 
-Move from "GPT-only" to a real, embeddable, open-source calculator that other circular-economy platforms (e.g. Smarta Kartan Göteborg) can integrate into their own tools, and that can be shared on LinkedIn, Instagram and YouTube.
+For a number of circulated items N and the emissions of one new item (a low-high range, kept all the way through):
 
-## Methodology in brief
+- **Avoided**: N × new-item emissions × the share that replaces a new purchase (default 50%)
+- **Minus trips**: for the share that does *not* replace a new purchase, the car trips to and from the service, divided by the items per visit
+- **Minus operations**: the same share times the service's operating emissions per item
 
-For each product category, calculate the lifecycle emissions of one new product, multiply by the number of circulations, then subtract:
+Trips and operations are only charged to the share that does not replace a new purchase, because a new purchase would have caused a shop trip too.
 
-- Emissions for the share that does not actually replace new consumption (default 50%)
-- Increased transport emissions induced by the circulation service
-- Increased operational/energy emissions from running the service
-
-The result is an **estimated range** (low–high) of CO2e savings, plus optional waste, water and chemical metrics.
-
-Full step-by-step methodology in [docs/PROMPT.md](docs/PROMPT.md).
+All factors and their sources: [app/factors.js](app/factors.js) and [docs/research-factors-2026-09-30.md](docs/research-factors-2026-09-30.md). The original step-by-step method: [docs/PROMPT.md](docs/PROMPT.md).
 
 ## License
 
-To be decided. Likely AGPL-3.0 to match the [SwingaOrg/app](https://github.com/SwingaOrg/app) cooperative platform.
-
-## Contact
-
-[swinga.coop](https://swinga.coop) — info@swinga.coop
+To be decided.

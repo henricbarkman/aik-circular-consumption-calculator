@@ -452,7 +452,7 @@ function plainText() {
     return 'exempelvärde utan källa';
   };
   const L = [];
-  L.push(`Klimatnyttan av cirkulär konsumtion: ${state.count.toLocaleString('sv-SE')} ${c.plural} som ${METHODS[state.method].label}`);
+  L.push(`CCC, Circular Consumption Calculator: ${state.count.toLocaleString('sv-SE')} ${c.plural} som ${METHODS[state.method].label}`);
   L.push(`Netto: ${massRange(res.low.net, res.high.net)} koldioxidekvivalenter som inte släpptes ut.`);
   L.push('');
   L.push(`1. Utsläpp från ${c.singular}: ${FIELDS.lca.chip(f('lca').value)} (${src('lca')})`);

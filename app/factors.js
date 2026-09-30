@@ -166,8 +166,9 @@ export const SHARED = {
     sources: [
       { title: 'The Second Hand Effect Report', org: 'Schibsted', year: 2023, url: 'https://assets.ctfassets.net/9qowtvvo5be7/77HjGUIilek5wIlvIeGkhg/df89f84ef9549d595ca0521a01db97d2/Public_Schibsted-The-Second-Hand-Effect-Report-2023_14-june2024.pdf' },
       { title: 'Second Hand Effect 2025', org: 'Vend', year: 2025, url: 'https://vend.com/news/half-of-second-hand-purchases-replace-new-ones-report-shows' },
+      { title: 'Utvärdering av fritidsbanker', org: 'RISE', year: 2020, url: 'https://www.fritidsbanken.se/wp-content/uploads/2020/01/Utvardering-av-fritidsbanker_RISE_rapport.pdf' },
     ],
-    note: 'På Blocket ersatte hälften av köpen ett nyköp 2023. I mätningen 2025 var andelen 40 procent. Metodens utgångsläge är 50 procent.',
+    note: 'På Blocket ersatte hälften av köpen ett nyköp 2023. I mätningen 2025 var andelen 40 procent. RISE räknade också med 50 procent för Fritidsbanken, fast 72 procent av låntagarna sa att de hade funderat på att köpa i stället. Metodens utgångsläge är 50 procent.',
     why: 'Alla second hand-köp, lån och hyror ersätter inte ett nyköp. Något är billigare och köps därför i onödan, något hade aldrig köpts alls.',
   },
   carShare: {

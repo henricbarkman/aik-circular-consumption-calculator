@@ -27,7 +27,8 @@
   --font-body: 'DM Sans', system-ui, sans-serif;
 
   --measure: 42rem;
-  --wide: 70rem;
+  --wide: 82rem;
+  --side: clamp(19rem, 29vw, 25rem);
   --gutter: clamp(1.25rem, 4vw, 3rem);
 }
 
@@ -68,12 +69,37 @@ a:hover { color: var(--ink); }
   font-size: 0.9rem; color: var(--ink-light);
 }
 .topline a { color: var(--ink); font-weight: 600; text-decoration: none; white-space: nowrap; }
-@media (max-width: 34rem) { .topline span { display: none; } }
+.topline b { color: var(--ink); font-family: var(--font-display); font-weight: 700; }
+@media (max-width: 34rem) { .topline-long { display: none; } }
 .topline a:hover { color: var(--lavender-text); }
 
 /* ---------- The question, as a sentence you complete ---------- */
 
-.ask { padding-top: clamp(2rem, 8vh, 6rem); padding-bottom: clamp(2.5rem, 7vh, 5rem); }
+/* ---------- Workspace: question, chart and steps, with the answer beside them ---------- */
+
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: 'ask' 'side' 'flow' 'steps';
+  padding-top: clamp(2rem, 8vh, 6rem);
+}
+.ask { grid-area: ask; padding-bottom: clamp(2.5rem, 7vh, 5rem); }
+.result { grid-area: side; }
+.flow { grid-area: flow; }
+.steps { grid-area: steps; }
+
+/* On a computer the answer stays in view while you change the numbers. */
+@media (min-width: 64rem) {
+  .workspace {
+    grid-template-columns: minmax(0, 1fr) var(--side);
+    grid-template-rows: auto auto 1fr;
+    grid-template-areas: 'ask side' 'flow side' 'steps side';
+    column-gap: clamp(3rem, 5vw, 5rem);
+  }
+  .result { grid-row: 1 / span 3; align-self: start; position: sticky; top: 1.5rem; }
+  .ask h1 { font-size: clamp(2.1rem, 3.5vw, 3.7rem); max-width: none; }
+  .ask { padding-bottom: 3rem; }
+}
 
 .ask h1 {
   font-family: var(--font-display);
@@ -83,7 +109,7 @@ a:hover { color: var(--ink); }
   letter-spacing: -0.02em;
   max-width: 17ch;
 }
-@media (min-width: 60rem) { .ask h1 { max-width: 20ch; } }
+@media (min-width: 60rem) and (max-width: 63.99rem) { .ask h1 { max-width: 20ch; } }
 
 .slot {
   font: inherit;
@@ -130,15 +156,25 @@ input.slot::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 .result {
   background: var(--stage);
   color: #F2F4F3;
+  container-type: inline-size;
+  /* Full bleed on small screens: out through the workspace gutter. */
+  margin-inline: calc(-1 * var(--gutter));
 }
-.result .wrap {
-  padding-top: clamp(2.5rem, 7vh, 4.5rem);
-  padding-bottom: clamp(2.5rem, 7vh, 4.5rem);
+.result-inner {
+  padding: clamp(2.5rem, 7vh, 4.5rem) var(--gutter);
   display: grid;
   gap: 1.5rem 3rem;
 }
-@media (min-width: 56rem) {
-  .result .wrap { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); align-items: end; }
+@media (min-width: 44rem) and (max-width: 63.99rem) {
+  .result-inner { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); align-items: end; }
+}
+@media (min-width: 64rem) {
+  .result { margin-inline: 0; border-radius: 18px; }
+  .result-inner { padding: 2rem 1.9rem 2.1rem; gap: 1.25rem; }
+  .result .result-figure { font-size: min(4.2rem, 15cqi); }
+  .result .result-caption { font-size: 1.08rem; }
+  .result .result-actions { margin-top: 1rem; }
+  .stickysum { display: none; }
 }
 
 .result-figure {
@@ -181,6 +217,7 @@ input.slot::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 /* ---------- Chart ---------- */
 
 .flow { padding-top: clamp(3rem, 8vh, 5rem); }
+@media (min-width: 64rem) { .flow { padding-top: 0; } }
 .flow h2, .steps h2, .sources h2, .method h2 {
   font-family: var(--font-display);
   font-weight: 600;
