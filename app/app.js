@@ -28,14 +28,24 @@ const FIELDS = {
   trips: { label: () => 'Enkelresor per besök', unit: 'resor', get: () => METHODS[state.method].tripsPerCirculation, chip: (v) => `${num(v)} ${v === 1 ? 'resa' : 'resor'}`, min: 0, max: 100 },
   km: { label: () => 'Avstånd en väg', unit: 'km', get: () => SHARED.kmPerTrip, chip: (v) => `${num(v)} km`, min: 0, max: 10000 },
   carEf: { label: () => 'Utsläpp per bilkilometer', unit: 'kg per km', get: () => SHARED.carEf, chip: (v) => `${num(v)} kg per km`, min: 0, max: 10, step: 0.01 },
-  // The Myrorna figure is measured for clothes only; for anything else it is an assumption.
-  opEf: { label: () => 'Driftens utsläpp per föremål', unit: 'kg', get: () => (state.rows.every((r) => r.category === 'klader') ? SHARED.opEfPerItem : SHARED.opEfPerItemOther), chip: (v) => `${num(v)} kg`, min: 0, max: 10000, step: 0.1 },
+  // The Myrorna figure is measured for clothes shops only; for anything else it is an assumption.
+  opEf: { label: () => 'Driftens utsläpp per föremål', unit: 'kg', get: opEfDefault, chip: (v) => `${num(v)} kg`, min: 0, max: 10000, step: 0.1 },
 };
 
-// Editable numbers that differ per product type.
+function opEfDefault() {
+  if (isRepair()) return SHARED.opEfRepair;
+  return state.rows.every((r) => r.category === 'klader') ? SHARED.opEfPerItem : SHARED.opEfPerItemOther;
+}
+
+const isRepair = () => state.method === 'repair';
+
+// Editable numbers that differ per product type. share and repairKg are used
+// only when the method is repair.
 const ROW_FIELDS = {
   lca: { label: (c) => `Utsläpp från ${c.singular}`, unit: 'kg koldioxidekvivalenter', get: (c) => c.lca, chip: (v) => `${num(v)} kg`, min: 0, max: 100000, step: 'any' },
   itemsPerTrip: { label: (c) => `${cap(c.plural)} per besök`, unit: 'st', get: (c) => c.itemsPerTrip, chip: (v) => num(v), min: 0.1, max: 1000, step: 0.5 },
+  share: { label: (c) => `Andel lagade ${c.plural} som ersätter ett nyköp`, unit: '%', get: (c) => c.repairShare, chip: (v) => `${num(v)} %`, min: 0, max: 100 },
+  repairKg: { label: (c) => `Utsläpp från en lagning av ${c.plural}`, unit: 'kg koldioxidekvivalenter', get: (c) => c.repairKg, chip: (v) => `${num(v)} kg`, min: 0, max: 10000, step: 'any' },
 };
 
 const MAX_COUNT = 100000000;
@@ -79,6 +89,10 @@ function rowInputs(lcaOf = (row) => field(`lca:${row.category}`).value) {
     count: row.count,
     lca: lcaOf(row),
     itemsPerTrip: field(`itemsPerTrip:${row.category}`).value,
+    ...(isRepair() ? {
+      replacementPct: field(`share:${row.category}`).value,
+      repairKg: field(`repairKg:${row.category}`).value,
+    } : {}),
   }));
 }
 
@@ -109,7 +123,7 @@ function spanOfResult() {
 // ---------- URL: a calculation is a link ----------
 
 const URL_KEYS = { replacementPct: 'r', carPct: 'bil', trips: 'resor', km: 'km', carEf: 'ef', opEf: 'drift' };
-const ROW_URL = { lca: 'kg', itemsPerTrip: 'per' };
+const ROW_URL = { lca: 'kg', itemsPerTrip: 'per', share: 'r', repairKg: 'lag' };
 
 function readUrl() {
   const q = new URLSearchParams(location.search);
@@ -445,7 +459,7 @@ function renderResult(res) {
 
   const neg = $('out-negative');
   neg.hidden = res.net >= 0;
-  if (res.net < 0) neg.textContent = 'Resorna och driften ger mer utsläpp än de nyköp som undveks. Titta på antagandena om bil och avstånd, eller räkna utan driften om den redan finns av andra skäl.';
+  if (res.net < 0) neg.textContent = `${isRepair() ? 'Lagningen, resorna och driften' : 'Resorna och driften'} ger mer utsläpp än de nyköp som undveks. Titta på antagandena om bil och avstånd, eller räkna utan driften om den redan finns av andra skäl.`;
 }
 
 // What the net rests on, in words: typical values, the user's own, or a mix,
@@ -480,19 +494,21 @@ const SEGMENTS = [
   { key: 'net', label: 'Netto, undvikna utsläpp', color: 'var(--mark-net)' },
   { key: 'trip', label: 'Resor', color: 'var(--mark-trip)' },
   { key: 'ops', label: 'Drift', color: 'var(--mark-ops)' },
+  { key: 'repair', label: 'Lagningen', color: 'var(--mark-repair)' },
   { key: 'rest', label: 'Ersätter inte ett nyköp', color: 'var(--mark-rest)' },
 ];
 
 function renderBars(res) {
-  $('flow-intro').textContent = `Stapeln är hela nyttan om alla ${res.count.toLocaleString('sv-SE')} ${things(res.count)} hade ersatt ett nyköp. Färgerna visar hur stor del som blir kvar och vart resten tar vägen.${res.net < 0 ? ' Nettot är negativt, så det finns ingen grön del: resor och drift kostar mer än det som undveks, och stapeln blir längre än nyttan.' : ''}`;
-  $('legend').innerHTML = SEGMENTS.map((s) => `<li><span class="swatch" style="background:${s.color}"></span>${s.label}</li>`).join('');
+  const costs = isRepair() ? 'lagning, resor och drift' : 'resor och drift';
+  $('flow-intro').textContent = `Stapeln är hela nyttan om alla ${res.count.toLocaleString('sv-SE')} ${things(res.count)} hade ersatt ett nyköp. Färgerna visar hur stor del som blir kvar och vart resten tar vägen.${res.net < 0 ? ` Nettot är negativt, så det finns ingen grön del: ${costs} kostar mer än det som undveks, och stapeln blir längre än nyttan.` : ''}`;
+  $('legend').innerHTML = SEGMENTS.filter((s) => s.key !== 'repair' || isRepair()).map((s) => `<li><span class="swatch" style="background:${s.color}"></span>${s.label}</li>`).join('');
   const parts = (res.net >= 0
-    ? [['net', res.net], ['trip', res.transportKg], ['ops', res.opsKg], ['rest', res.notReplacingLost]]
-    : [['trip', res.transportKg], ['ops', res.opsKg], ['rest', res.notReplacingLost]]).filter(([, v]) => v > 0);
+    ? [['net', res.net], ['trip', res.transportKg], ['ops', res.opsKg], ['repair', res.repairKg], ['rest', res.notReplacingLost]]
+    : [['trip', res.transportKg], ['ops', res.opsKg], ['repair', res.repairKg], ['rest', res.notReplacingLost]]).filter(([, v]) => v > 0);
   const width = $('bars').clientWidth || 600;
   const gap = 2;
   const scale = Math.max(1, parts.reduce((a, [, v]) => a + v, 0));
-  const cost = res.transportKg + res.opsKg;
+  const cost = res.transportKg + res.opsKg + res.repairKg;
   let x = 0;
   const rects = parts.map(([key, v], i) => {
     const seg = SEGMENTS.find((q) => q.key === key);
@@ -505,8 +521,8 @@ function renderBars(res) {
     return `<path data-tip="${seg.label}: ${mass(v)}" d="${d}" fill="${seg.color}"></path>`;
   }).join('');
   $('bars').innerHTML = `<div class="bar-row">
-      <p>${res.net >= 0 ? `Netto <b>${mass(res.net)}</b>` : `Netto minus <b>${mass(-res.net)}</b>`} av möjliga ${mass(res.potential)}.${cost > 0 ? ` Resor och drift drar bort ${mass(cost)}${res.avoided > 0 ? `, ${pct(cost, res.avoided)} av det som undveks` : ''}.` : ''}</p>
-      <svg role="img" viewBox="0 0 ${width} 28" aria-label="Netto ${mass(res.net)}, resor ${mass(res.transportKg)}, drift ${mass(res.opsKg)}, ersätter inte ett nyköp ${mass(res.notReplacingLost)}">${rects}</svg>
+      <p>${res.net >= 0 ? `Netto <b>${mass(res.net)}</b>` : `Netto minus <b>${mass(-res.net)}</b>`} av möjliga ${mass(res.potential)}.${cost > 0 ? ` ${cap(costs)} drar bort ${mass(cost)}${res.avoided > 0 ? `, ${pct(cost, res.avoided)} av det som undveks` : ''}.` : ''}</p>
+      <svg role="img" viewBox="0 0 ${width} 28" aria-label="Netto ${mass(res.net)}, resor ${mass(res.transportKg)}, drift ${mass(res.opsKg)},${isRepair() ? ` lagningen ${mass(res.repairKg)},` : ''} ersätter inte ett nyköp ${mass(res.notReplacingLost)}">${rects}</svg>
     </div>`;
 }
 
@@ -535,13 +551,27 @@ function renderSteps(res) {
         <p>Utsläppen från att tillverka lika många nya produkter. Det är den största möjliga nyttan, och den förutsätter att allt hade köpts nytt annars. Talen per produkt är typiska värden: öppna dem för att se källan, spannet och byta mot era egna.</p>`,
       editors: lcaKeys,
     },
-    {
+    isRepair() ? {
+      title: 'Men alla lagningar ersätter inte ett nyköp',
+      body: `${res.rows.map((r) => `<p class="equation">${chip(`share:${r.category}`)} av ${r.count.toLocaleString('sv-SE')} ${catById[r.category].plural}${op('×')}${num(r.lca)} kg${op('=')}${res$(mass(r.avoided))}</p>`).join('')}
+        ${many ? `<p class="equation">Tillsammans ${res$(mass(res.avoided))} undvikna utsläpp</p>` : ''}
+        <p>Räkna bara lagningar som blev klara. På reparationskaféer lyckas ungefär två av tre.</p>
+        <details class="why"><summary>Varför inte alla?</summary><p>En del trasiga saker hade fått ligga kvar, eller ersatts av något begagnat. En lagad sak håller inte heller alltid lika länge som en ny. För kläder finns en mätning: 82 procent av lagningarna ersatte ett nyköp. För annat finns ingen, så metoden räknar med hälften. Vet ni mer, ändra andelen.</p></details>`,
+      editors: res.rows.map((r) => `share:${r.category}`),
+    } : {
       title: 'Men alla ersätter inte ett nyköp',
       body: `<p class="equation">${chip('replacementPct')} av ${total} ${things(res.count)}${op('=')}${num(res.replacing)} som ersätter ett nyköp</p>
         <p class="equation">${mass(res.potential)}${op('×')}${num(field('replacementPct').value)} %${op('=')}${res$(mass(res.avoided))} undvikna utsläpp</p>
         <details class="why"><summary>Varför inte alla?</summary><p>Begagnat är billigare, så en del köps som annars aldrig hade köpts. En del lånas en gång för att det går, fast behovet hade kunnat vänta. Metodens utgångsläge är att hälften ersätter ett nyköp. Vet ni mer om era besökare, ändra andelen.</p></details>`,
       editors: ['replacementPct'],
     },
+    ...(isRepair() ? [{
+      title: 'Själva lagningen',
+      body: `${res.rows.map((r) => `<p class="equation">${r.count.toLocaleString('sv-SE')} ${catById[r.category].plural}${op('×')}${chip(`repairKg:${r.category}`)}${op('=')}${res$(mass(r.repair))}</p>`).join('')}
+        ${many ? `<p class="equation">Tillsammans ${res$(mass(res.repairKg))}</p>` : ''}
+        <p>Reservdelar, tråd och verkstadens el. Räknas för varje lagning: när lagningen ersätter ett nyköp kostar delarna ändå något, och när den inte gör det tillkommer de helt.</p>`,
+      editors: res.rows.map((r) => `repairKg:${r.category}`),
+    }] : []),
     {
       title: 'Resorna till och från',
       off: !state.transportOn,
@@ -549,11 +579,11 @@ function renderSteps(res) {
         <p class="equation">${chip('carPct')} åker bil${op('×')}${chip('trips')}${op('×')}${chip('km')}${op('×')}${chip('carEf')}${op('=')}${num(res.perTripKg)} kg per besök</p>
         <p class="equation">${visitTerms}${op('=')}${num(res.visits)} besök</p>
         <p class="equation">${num(res.visits)} besök${op('×')}${num(res.perTripKg)} kg${op('=')}${res$(mass(res.transportKg))}</p>
-        <details class="why"><summary>Varför bara för dem som inte ersätter ett nyköp?</summary><p>Den som hade köpt nytt i stället hade också åkt till en butik. Resan tillkommer bara när köpet, hyran eller lånet inte ersatte något. Flera saker som hämtas vid samma besök delar på resan.</p></details>`,
+        <details class="why"><summary>Varför bara för dem som inte ersätter ett nyköp?</summary><p>Den som hade köpt nytt i stället hade också åkt till en butik. Resan tillkommer bara när köpet, hyran, lånet eller lagningen inte ersatte något. Flera saker som hämtas vid samma besök delar på resan.</p></details>`,
       editors: ['carPct', 'trips', 'km', 'carEf', ...perKeys],
     },
     {
-      title: 'Driften av butiken eller utlåningen',
+      title: isRepair() ? 'Driften av verkstaden' : 'Driften av butiken eller utlåningen',
       off: !state.opsOn,
       body: `<label class="switch"><input type="checkbox" data-toggle="opsOn" ${state.opsOn ? 'checked' : ''}> Räkna med driften</label>
         <p class="equation">${num(res.notReplacing)} ${things(res.notReplacing)} som inte ersätter ett nyköp${op('×')}${chip('opEf')} per styck${op('=')}${res$(mass(res.opsKg))}</p>
@@ -563,7 +593,7 @@ function renderSteps(res) {
     {
       total: true,
       title: 'Netto',
-      body: `<p class="equation">${mass(res.avoided)}${op('−')}${mass(res.transportKg)}${op('−')}${mass(res.opsKg)}${op('=')}${res$(mass(res.net))}</p>`,
+      body: `<p class="equation">${mass(res.avoided)}${isRepair() ? `${op('−')}${mass(res.repairKg)}` : ''}${op('−')}${mass(res.transportKg)}${op('−')}${mass(res.opsKg)}${op('=')}${res$(mass(res.net))}</p>`,
     },
   ];
 
@@ -593,7 +623,8 @@ function renderSteps(res) {
 function renderTables() {
   const keys = [
     ...state.rows.map((r) => `lca:${r.category}`),
-    'replacementPct', 'carPct', 'trips', 'km', 'carEf',
+    ...(isRepair() ? state.rows.flatMap((r) => [`share:${r.category}`, `repairKg:${r.category}`]) : ['replacementPct']),
+    'carPct', 'trips', 'km', 'carEf',
     ...state.rows.map((r) => `itemsPerTrip:${r.category}`),
     'opEf',
   ];
@@ -698,16 +729,26 @@ function plainText() {
   L.push('');
   L.push('1. Om allt hade köpts nytt:');
   for (const r of res.rows) L.push(`   ${r.count.toLocaleString('sv-SE')} ${catById[r.category].plural} × ${num(r.lca)} kg (${src(`lca:${r.category}`)}) = ${mass(r.potential)}`);
-  L.push(`2. Andel som ersätter ett nyköp: ${num(f('replacementPct'))} % (${src('replacementPct')}). Undvikna utsläpp: ${mass(res.avoided)}`);
+  let n = 2;
+  if (isRepair()) {
+    L.push(`${n++}. Andel lagningar som ersätter ett nyköp:`);
+    for (const r of res.rows) L.push(`   ${catById[r.category].plural}: ${num(r.replacementPct)} % (${src(`share:${r.category}`)}) = ${mass(r.avoided)}`);
+    L.push(`   Undvikna utsläpp: ${mass(res.avoided)}. Bara lagningar som blev klara räknas.`);
+    L.push(`${n++}. Själva lagningen:`);
+    for (const r of res.rows) L.push(`   ${r.count.toLocaleString('sv-SE')} ${catById[r.category].plural} × ${num(r.repairKg)} kg (${src(`repairKg:${r.category}`)}) = ${mass(r.repair)}`);
+  } else {
+    L.push(`${n++}. Andel som ersätter ett nyköp: ${num(f('replacementPct'))} % (${src('replacementPct')}). Undvikna utsläpp: ${mass(res.avoided)}`);
+  }
   if (state.transportOn) {
-    L.push(`3. Resor: ${num(f('carPct'))} % med bil (${src('carPct')}), ${num(f('trips'))} enkelresor per besök (${src('trips')}), ${num(f('km'))} km (${src('km')}), ${num(f('carEf'))} kg per km (${src('carEf')}) = ${num(res.perTripKg)} kg per besök.`);
+    L.push(`${n}. Resor:${num(f('carPct'))} % med bil (${src('carPct')}), ${num(f('trips'))} enkelresor per besök (${src('trips')}), ${num(f('km'))} km (${src('km')}), ${num(f('carEf'))} kg per km (${src('carEf')}) = ${num(res.perTripKg)} kg per besök.`);
     for (const r of res.rows) L.push(`   ${catById[r.category].plural}: ${num(r.itemsPerTrip)} per besök (${src(`itemsPerTrip:${r.category}`)}), ${num(r.visits)} besök`);
     L.push(`   ${num(res.visits)} besök × ${num(res.perTripKg)} kg = ${mass(res.transportKg)}`);
-  } else L.push('3. Resor: inte medräknade.');
-  if (state.opsOn) L.push(`4. Drift: ${num(f('opEf'))} kg per styck (${src('opEf')}). Avdrag: ${mass(res.opsKg)}`);
-  else L.push('4. Drift: inte medräknad.');
+  } else L.push(`${n}. Resor: inte medräknade.`);
+  n++;
+  if (state.opsOn) L.push(`${n}. Drift: ${num(f('opEf'))} kg per styck (${src('opEf')}). Avdrag: ${mass(res.opsKg)}`);
+  else L.push(`${n}. Drift: inte medräknad.`);
   L.push('');
-  L.push('Resor och drift räknas bara för den del som inte ersätter ett nyköp.');
+  L.push(`Resor och drift räknas bara för den del som inte ersätter ett nyköp.${isRepair() ? ' Själva lagningen räknas för varje lagning.' : ''}`);
   L.push(`Uträkningen: ${linkForState()}`);
   return L.join('\n');
 }

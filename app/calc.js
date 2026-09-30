@@ -9,10 +9,16 @@
 // only the emissions per new item and the items per visit differ per row. Trips
 // are counted as visits, so four chairs fetched together are one trip.
 
+// A repair adds one more cost: the spare parts and material, charged to every
+// repaired item, because they are new material that buying new would not add.
+// Repair is also the one method whose replacement share differs per product
+// type, so a row may carry its own.
+
 /**
  * @param {object} p
- * @param {{count: number, lca: number, itemsPerTrip: number}[]} p.rows
- *   count: circulations, lca: kg CO2e per new item, itemsPerTrip: items per visit
+ * @param {{count: number, lca: number, itemsPerTrip: number, replacementPct?: number, repairKg?: number}[]} p.rows
+ *   count: circulations, lca: kg CO2e per new item, itemsPerTrip: items per visit,
+ *   replacementPct: this row's share instead of the shared one, repairKg: kg CO2e per repair
  * @param {number} p.replacementPct   share that replaces a new purchase, 0-100
  * @param {boolean} p.transportOn
  * @param {number} p.carPct           share of visits made by car, 0-100
@@ -23,11 +29,10 @@
  * @param {number} p.opEf             kg CO2e per circulated item
  */
 export function calculate(p) {
-  const r = p.replacementPct / 100;
   const perTripKg = (p.carPct / 100) * p.trips * p.km * p.carEf;
 
   const rows = p.rows.map((row) => {
-    const replacing = row.count * r;
+    const replacing = row.count * ((row.replacementPct ?? p.replacementPct) / 100);
     const notReplacing = row.count - replacing;
     return {
       ...row,
@@ -36,6 +41,7 @@ export function calculate(p) {
       replacing,
       notReplacing,
       visits: row.itemsPerTrip > 0 ? notReplacing / row.itemsPerTrip : 0,
+      repair: row.count * (row.repairKg ?? 0),
     };
   });
   const sum = (k) => rows.reduce((a, x) => a + x[k], 0);
@@ -46,6 +52,7 @@ export function calculate(p) {
   const notReplacing = sum('notReplacing');
   const transportKg = p.transportOn ? visits * perTripKg : 0;
   const opsKg = p.opsOn ? notReplacing * p.opEf : 0;
+  const repairKg = sum('repair');
 
   return {
     rows,
@@ -59,7 +66,8 @@ export function calculate(p) {
     perTripKg,
     transportKg,
     opsKg,
-    net: avoided - transportKg - opsKg,
+    repairKg,
+    net: avoided - transportKg - opsKg - repairKg,
   };
 }
 

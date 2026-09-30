@@ -3,7 +3,9 @@
 ## 2026-09-30 (natt)
 - Henric: kan CCC inte läsa Excel direkt? Lånat och hyrt ger samma resultat, en kategori. Saknar lagat.
 - Demi: Excel (.xlsx, .xls) och .ods läses direkt i webbläsaren; läsaren laddas bara när ett kalkylark väljs, och rapporten säger vilket blad som lästes. Hyrt och lånat är ett sätt, "hyrts eller lånats"; gamla länkar med lånat fungerar. Provat i Firefox och Chrome.
-- → Nästa: lagning som eget sätt, efter utredning av hur en lagning räknas (ersätter ett köp, eller förlänger livet?). Sedan föremål per besök.
+- Henric (senare): 82 % för lagning av kläder är rimligt.
+- Demi: "lagats" som tredje sätt. Andelen som ersätter ett nyköp sätts per sort: 82 % för kläder (WRAP 2025, IVL), 50 % för resten. Själva lagningen blir ett eget steg: reservdelar och material räknas för varje lagad sak (0,1 kg per plagg, 3 kg per mobil, 0,2 kg som antagande där källa saknas). Beslutet står under Method decisions i README. Utredningen finns i `docs/research-repair-2026-09-30.md`.
+- → Nästa: föremål per besök (för lagning har Privett mätt 1,4 per besök på reparationskaféer).
 
 ## 2026-09-30 (sen kväll)
 - Henric: knappen "Lägg till en sorts produkt" gick inte att trycka på, och rubrikerna syntes utan uträkning. Ja till att kunna ladda upp en lista.

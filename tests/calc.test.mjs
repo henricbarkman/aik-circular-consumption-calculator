@@ -90,8 +90,9 @@ test('formatting never hides a small end or the value used', () => {
 test('every factor that says "source" names one', () => {
   const all = [...CATEGORIES, ...Object.values(SHARED), ...Object.values(METHODS)];
   for (const f of all) {
-    const defs = [f, f.lca, f.itemsPerTrip, f.tripsPerCirculation].filter((d) => d && typeof d === 'object' && 'kind' in d);
+    const defs = [f, f.lca, f.itemsPerTrip, f.tripsPerCirculation, f.repairShare, f.repairKg].filter((d) => d && typeof d === 'object' && 'kind' in d);
     for (const d of defs) {
+      if (d.kind === 'assumption') assert.ok(d.why, `assumption without a reason: ${JSON.stringify(d).slice(0, 80)}`);
       if (d.kind !== 'source') continue;
       assert.ok(d.sources?.length, `missing sources on ${JSON.stringify(d).slice(0, 80)}`);
       for (const s of d.sources) assert.match(s.url, /^https:\/\//);
@@ -105,4 +106,40 @@ test('every category has a typical value inside its span, and says where it come
     assert.ok(c.lca.typical, `${c.id} has no note on its typical value`);
   }
   assert.equal(CATEGORIES.find((c) => c.id === 'klader').lca.value, 9);
+});
+
+// Repair: Henric 2026-09-30, 82 % for clothes and 50 % for the rest, and the
+// repair's own emissions charged to every repaired item.
+
+test('repair: each row keeps its own share, and the repair itself is charged to all', () => {
+  const repair = { ...shared, trips: 4, rows: [
+    { ...clothes, replacementPct: 82, repairKg: 0.1 },
+    { count: 100, lca: 48, itemsPerTrip: 1, replacementPct: 50, repairKg: 3 },   // phones
+  ] };
+  const r = calculate(repair);
+  close(r.rows[0].replacing, 984);          // 1200 × 0.82
+  close(r.rows[0].notReplacing, 216);
+  close(r.rows[1].replacing, 50);           // 100 × 0.5
+  close(r.avoided, 984 * 9 + 50 * 48);      // 8856 + 2400 = 11256
+  close(r.repairKg, 1200 * 0.1 + 100 * 3);  // 120 + 300 = 420, all items, not only the non-replacing
+  close(r.perTripKg, 3.57);                 // 0.75 × 4 × 7 × 0.17
+  close(r.visits, 216 / 2.5 + 50);          // 86.4 + 50 = 136.4
+  close(r.transportKg, 136.4 * 3.57);       // 486.948
+  close(r.opsKg, 266 * 0.25);               // (216 + 50) × 0.25 = 66.5
+  close(r.net, 11256 - 420 - 486.948 - 66.5);
+});
+
+test('rows without their own share or repair use the shared share and add nothing', () => {
+  const r = calculate({ ...shared, rows: [clothes] });
+  close(r.repairKg, 0);
+  close(r.replacing, 600);
+});
+
+test('repair defaults: 82 % for clothes, 50 % for the rest, every category has a repair value', () => {
+  for (const c of CATEGORIES) {
+    assert.equal(c.repairShare.value, c.id === 'klader' ? 82 : 50, c.id);
+    assert.ok(c.repairKg.value > 0, c.id);
+    if (c.repairKg.low != null) assert.ok(c.repairKg.low <= c.repairKg.value && c.repairKg.value <= c.repairKg.high, c.id);
+  }
+  assert.equal(METHODS.repair.tripsPerCirculation.value, 4);
 });

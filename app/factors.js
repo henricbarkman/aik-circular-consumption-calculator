@@ -35,7 +35,42 @@ export const METHODS = {
       why: 'Två turer och returer: en för att hämta, en för att lämna tillbaka.',
     },
   },
+  // Research and the choice of shares: docs/research-repair-2026-09-30.md.
+  repair: {
+    id: 'repair',
+    label: 'lagats',
+    tripsPerCirculation: {
+      value: 4,
+      kind: 'assumption',
+      why: 'Två turer och returer: en för att lämna in, en för att hämta. Ingen källa mäter resorna till en lagningsverkstad. På ett reparationskafé väntar man ofta medan det lagas, och då blir det två.',
+    },
+  },
 };
+
+const WRAP_2025 = { title: 'Displacement Rates Untangled', org: 'WRAP', year: 2025, url: 'https://www.wrap.ngo/sites/default/files/2025-02/WRAP-Textiles-2030-Displacement-rate-report-REV1.pdf' };
+const IVL_2025 = { title: 'Environmental impact of circular e-businesses in the clothing sector', org: 'IVL Svenska Miljöinstitutet', year: 2025, url: 'https://ivl.diva-portal.org/smash/get/diva2:1960643/FULLTEXT02.pdf' };
+const PRIVETT = { title: 'Potential impact of UK Repair Cafés on the mitigation of greenhouse gas emissions', org: 'University of Surrey', year: 2018, url: 'https://frc.cfsd.org.uk/wp-content/uploads/2019/11/Impact-of-UK-Repair-Cafe%CC%81s-on-GHG-emissions_v15_SP.pdf' };
+const FAIRPHONE = { title: 'Life Cycle Assessment of the Fairphone 5', org: 'Fraunhofer IZM', year: 2024, url: 'https://www.fairphone.com/wp-content/uploads/2024/09/Fairphone5_LCA_Report_2024.pdf' };
+const JRC_PHONES = { title: 'Guidance for the Assessment of Material Efficiency: Application to Smartphones', org: 'EU-kommissionens forskningscentrum JRC', year: 2020, url: 'https://publications.jrc.ec.europa.eu/repository/bitstream/JRC116106/jrc116106_jrc_e4c_task2_smartphones_final_publ_id.pdf' };
+
+// Share of repairs that replace a new purchase. Henric 2026-09-30: 82 % for
+// clothes, where it is measured, and 50 % for everything else, where it is not.
+const REPAIR_SHARE_CLOTHES = {
+  value: 82, kind: 'source', sources: [WRAP_2025, IVL_2025],
+  note: 'WRAP frågade 721 kunder hos tre brittiska lagningsföretag för kläder 2024: 82 procent av lagningarna ersatte ett nyköp. IVL räknar med samma andel. En lagad sak håller inte alltid lika länge som en ny, så andelen kan vara något hög.',
+};
+const REPAIR_SHARE_OTHER = {
+  value: 50, kind: 'assumption',
+  why: 'Ingen mätning finns för annat än kläder. Hälften är samma andel som för second hand, och samma som reparationskaférörelsens beräkningar (Restart Project) använder: en lagning antas i snitt förlänga livet med hälften. För kläder har WRAP mätt 82 procent.',
+};
+
+// kg CO2e for the repair itself: spare parts, material and the workshop's
+// electricity. Charged to every repaired item, because the parts are new
+// material that buying new would not have added.
+const repairSmall = (what) => ({
+  value: 0.2, kind: 'assumption',
+  why: `Snittet för en lagning på brittiska reparationskaféer (Privett 2018), där hälften av lagningarna inte behövde några reservdelar alls. Ingen källa mäter lagning av ${what}. Byts en skärm, ett nätaggregat eller en motor blir det 4 till 5,5 kg: ändra då värdet.`,
+});
 
 const perVisit = (value, why) => ({ value, kind: 'assumption', why });
 
@@ -62,24 +97,32 @@ export const CATEGORIES = [
       sources: [{ title: 'Environmental assessment of Swedish clothing consumption', org: 'Mistra Future Fashion, RISE och Chalmers', year: 2019, url: 'https://research.chalmers.se/publication/514322/file/514322_Fulltext.pdf' }],
       note: 'Studien räknar med två till tre plagg per besök. Här används mitten.',
     },
+    repairShare: REPAIR_SHARE_CLOTHES,
+    repairKg: { value: 0.1, kind: 'source', sources: [IVL_2025, PRIVETT], note: 'Tråd, knappar och lite el: några gram material och högst 0,009 kWh per plagg enligt IVL. Privett fann att lagade plagg och lappade däck knappt syns i utsläppen.' },
     spread: 'Ett par strumpor och en vinterjacka hamnar långt ifrån varandra. Material och vikt avgör mest.',
   },
   {
     id: 'skor', plural: 'par skor', singular: 'ett nytt par skor',
     lca: { low: 13.4, high: 18.7, kind: 'source', sources: [ADEME], note: 'Tillverkning fram till butik. Läderskor 13,4, textilskor 17,3 och sportskor 18,7 kg.' },
     itemsPerTrip: perVisit(1, 'Skor köps oftast ett par i taget.'),
+    repairShare: REPAIR_SHARE_OTHER,
+    repairKg: repairSmall('skor'),
     spread: 'Läderskor ligger lägst och sportskor högst.',
   },
   {
     id: 'stolar', plural: 'stolar', singular: 'en ny stol',
     lca: { low: 18.6, high: 34.4, kind: 'source', sources: [ADEME], note: 'Tillverkning fram till butik. Trästol 18,6, trä med klädsel 24,8 och plaststol 34,4 kg.' },
     itemsPerTrip: perVisit(2, 'Stolar hämtas ofta två eller fler åt gången.'),
+    repairShare: REPAIR_SHARE_OTHER,
+    repairKg: repairSmall('stolar'),
     spread: 'En enkel trästol ligger lägst, en plaststol högst.',
   },
   {
     id: 'soffor', plural: 'soffor', singular: 'en ny soffa',
     lca: { low: 179, high: 198, kind: 'source', sources: [ADEME], note: 'Tillverkning fram till butik. Textilklädd 179, läder 182 och bäddsoffa 198 kg.' },
     itemsPerTrip: perVisit(1, 'En soffa är alltid en egen resa.'),
+    repairShare: REPAIR_SHARE_OTHER,
+    repairKg: repairSmall('soffor'),
     spread: 'Stomme, stoppning och klädsel står för det mesta. En bäddsoffa ligger högst.',
   },
   {
@@ -91,12 +134,16 @@ export const CATEGORIES = [
       note: 'Lågt: ett vanligt bord enligt ADEME. Högt: ett skrivbord med stol enligt RISE, uträknat ur rapportens tal per år.',
     },
     itemsPerTrip: perVisit(1, 'Ett bord är oftast en egen resa.'),
+    repairShare: REPAIR_SHARE_OTHER,
+    repairKg: repairSmall('bord'),
     spread: 'Ett enkelt bord ligger lägst, ett kontorsskrivbord högst.',
   },
   {
     id: 'mobiler', plural: 'mobiltelefoner', singular: 'en ny mobiltelefon',
     lca: { low: 16.5, high: 79.3, kind: 'source', sources: [ADEME], note: 'Tillverkning. De äldre värdena från 2018 går efter skärmstorlek (16,5 till 39,1 kg), det nyare värdet i Impact CO2 är 79,3 kg. Källorna skiljer sig mycket, och därför är spannet brett.' },
     itemsPerTrip: perVisit(1, 'En telefon i taget.'),
+    repairShare: REPAIR_SHARE_OTHER,
+    repairKg: { value: 3, low: 0.6, high: 7.5, kind: 'source', sources: [FAIRPHONE, JRC_PHONES], typical: 'Ungefär en ny skärm enligt JRC:s tal.', note: 'Ett nytt batteri 0,6 kg och en hel skärmmodul 7,5 kg, med delen, frakten och omhändertagandet (Fairphone 5). Ur JRC:s tal blir en skärm ungefär 3 kg.' },
     spread: 'Nästan allt kommer från tillverkningen av chip och skärm. Större och nyare modeller ligger högre.',
   },
   {
@@ -107,18 +154,24 @@ export const CATEGORIES = [
       note: 'Lågt: minsta MacBook Air över hela livet enligt Apple. Högt: en genomsnittlig bärbar dator vid tillverkningen enligt Impact CO2.',
     },
     itemsPerTrip: perVisit(1, 'En dator i taget.'),
+    repairShare: REPAIR_SHARE_OTHER,
+    repairKg: repairSmall('datorer'),
     spread: 'Skärmstorlek, minne och grafikkort styr. Tillverkningen står för det mesta.',
   },
   {
     id: 'tv', plural: 'tv-apparater', singular: 'en ny tv',
     lca: { low: 328, high: 500, kind: 'source', sources: [ADEME], note: 'Tillverkning. Ökar med skärmstorleken, 500 kg gäller 49 tum och större.' },
     itemsPerTrip: perVisit(1, 'En tv i taget.'),
+    repairShare: REPAIR_SHARE_OTHER,
+    repairKg: repairSmall('tv-apparater'),
     spread: 'Skärmstorleken avgör nästan allt.',
   },
   {
     id: 'borr', plural: 'borrskruvdragare', singular: 'en ny sladdlös borrskruvdragare',
     lca: { value: 23.5, typical: 'ADEME:s värde för en sladdlös borrskruvdragare.', low: 11.8, high: 35.3, kind: 'source', sources: [ADEME_2019], note: 'ADEME anger 23,5 kg med en osäkerhet på 50 procent. Spannet här är 23,5 kg plus och minus 50 procent. Bara en källa finns.' },
     itemsPerTrip: perVisit(1, 'Ett verktyg per lån är det vanliga.'),
+    repairShare: REPAIR_SHARE_OTHER,
+    repairKg: repairSmall('verktyg'),
     spread: 'Råvarorna i motor och batteri står för mer än hälften.',
   },
   {
@@ -129,6 +182,8 @@ export const CATEGORIES = [
       note: 'Tillverkning av ett par skidor enligt ADEME och enligt RISE utvärdering av Fritidsbanken.',
     },
     itemsPerTrip: perVisit(1, 'Ett par skidor per besök.'),
+    repairShare: REPAIR_SHARE_OTHER,
+    repairKg: repairSmall('skidor'),
     spread: 'Utförsskidor med metall ligger högre än enkla längdskidor.',
   },
   {
@@ -139,6 +194,8 @@ export const CATEGORIES = [
       note: 'Lågt: en vanlig cykel, uträknat ur 5 gram per kilometer över 19 200 kilometer. Högt: en elcykel enligt ADEME.',
     },
     itemsPerTrip: perVisit(1, 'En cykel i taget.'),
+    repairShare: REPAIR_SHARE_OTHER,
+    repairKg: { value: 0.3, kind: 'source', sources: [PRIVETT], note: 'En ny eker 0,27 kg och en lapp 0,08 kg enligt reparationskaféernas data.' },
     spread: 'En vanlig cykel ligger lägst. Elcykelns batteri och motor nästan tredubblar utsläppen.',
   },
   {
@@ -149,12 +206,16 @@ export const CATEGORIES = [
       note: 'Lågt: en bok på 300 gram enligt ADEME. Högt: en pocketbok från skog till färdig bok i en nordamerikansk studie.',
     },
     itemsPerTrip: perVisit(3, 'Böcker lånas och köps ofta flera åt gången.'),
+    repairShare: REPAIR_SHARE_OTHER,
+    repairKg: repairSmall('böcker'),
     spread: 'Sidantal och papper avgör mest.',
   },
   {
     id: 'kok', plural: 'små köksapparater', singular: 'en ny liten köksapparat',
     lca: { low: 9.9, high: 98, kind: 'source', sources: [ADEME_2019], note: 'Bara tillverkningen. Vattenkokare 9,9, kaffebryggare 22,5 till 47,6, matberedare 41,3 och mikrovågsugn 98 kg.' },
     itemsPerTrip: perVisit(1, 'En apparat i taget.'),
+    repairShare: REPAIR_SHARE_OTHER,
+    repairKg: { value: 1.2, low: 0.2, high: 2.2, kind: 'source', sources: [PRIVETT], typical: 'Mitten av spannet.', note: 'Lågt: snittet för en lagning på reparationskafé, där hälften inte behövde reservdelar. Högt: ett nytt värmeelement. En ny motor ger 4,8 kg.' },
     spread: 'En vattenkokare ligger lägst, en mikrovågsugn högst.',
   },
 ];
@@ -207,5 +268,10 @@ export const SHARED = {
     value: 0.25,
     kind: 'assumption',
     why: 'Samma tal som för kläder, uträknat ur Myrornas hållbarhetsrapport 2025 (437 ton delat på ungefär 1,75 miljoner sålda plagg). Ingen källa mäter driften per styck för större föremål, och den är troligen högre. Byt gärna mot er egen siffra.',
+  },
+  opEfRepair: {
+    value: 0.25,
+    kind: 'assumption',
+    why: 'Ingen källa mäter driften av en lagningsverkstad per lagning. Samma tal som för en second hand-butik används. I IVL:s exempel på en lagningstjänst för kläder var tjänstens egna utsläpp, resor inräknade, några procent av nyttan.',
   },
 };
