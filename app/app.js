@@ -50,18 +50,21 @@ function field(key) {
 
 // One check for a typed or linked value, so a link can never hold a number the
 // editor would refuse. Returns an error message, or '' when the value is fine.
+// Plain decimals only: Number() would also accept ' ', '0x10' and '1e3'.
+const DECIMAL = /^\d*\.?\d+$/;
+
 function problem(key, raw) {
   const { d } = spec(key);
   if (!d) return 'Okänt fält.';
   const v = Number(raw);
-  if (raw === '' || raw == null || !Number.isFinite(v) || v < d.min || v > d.max) {
+  if (raw == null || !DECIMAL.test(String(raw)) || v < d.min || v > d.max) {
     return `Skriv ett tal från ${num(d.min)} till ${num(d.max)}.`;
   }
   return '';
 }
 
 function parseCount(raw) {
-  if (raw == null || raw === '') return null;
+  if (raw == null || !DECIMAL.test(String(raw))) return null;
   const n = Math.round(Number(raw));
   return Number.isFinite(n) && n >= 1 && n <= MAX_COUNT ? n : null;
 }
@@ -113,7 +116,10 @@ function readUrl() {
     if (Object.hasOwn(catById, id ?? '') && count && !rows.some((r) => r.category === id)) rows.push({ category: id, count });
   }
   // Links from the first version carried one product as vad + antal.
-  if (!rows.length && Object.hasOwn(catById, q.get('vad') ?? '')) rows.push({ category: q.get('vad'), count: parseCount(q.get('antal')) ?? 1200 });
+  if (!rows.length && Object.hasOwn(catById, q.get('vad') ?? '')) {
+    rows.push({ category: q.get('vad'), count: parseCount(q.get('antal')) ?? 1200 });
+    if (q.has('per') && !q.has(`per.${q.get('vad')}`)) q.set(`per.${q.get('vad')}`, q.get('per'));
+  }
   if (rows.length) state.rows = rows;
   if (Object.hasOwn(METHODS, q.get('hur') ?? '')) state.method = q.get('hur');
   if (q.get('resor_med') === '0') state.transportOn = false;
@@ -202,7 +208,10 @@ sentence.addEventListener('input', (e) => {
 });
 sentence.addEventListener('change', (e) => {
   const i = Number(e.target.dataset.row);
-  if (e.target.tagName !== 'SELECT' || !state.rows[i]) return;
+  if (!state.rows[i]) return;
+  // Leaving a blank or half-typed count shows the number the calculation uses.
+  if (e.target.tagName === 'INPUT') { e.target.value = state.rows[i].count; sizeSlots(); return; }
+  if (e.target.tagName !== 'SELECT') return;
   state.rows[i].category = e.target.value;
   pruneOverrides(); fillSentence(); render();
   sentence.querySelector(`select[data-row="${i}"]`)?.focus();
@@ -295,16 +304,27 @@ function renderResult(res) {
     ? 'koldioxidekvivalenter mer än om ingenting hade cirkulerats.'
     : 'koldioxidekvivalenter som inte släpptes ut.';
 
-  const span = spanOfResult();
-  const typed = state.rows.every((r) => Object.hasOwn(state.overrides, `lca:${r.category}`));
-  const one = state.rows.length === 1 ? catById[state.rows[0].category] : null;
-  $('out-note').innerHTML = typed
-    ? 'Uträkningen bygger på era egna värden för utsläppen från nya produkter.'
-    : `Uträkningen utgår från ${one ? `ett typiskt värde för ${one.singular}` : 'ett typiskt värde för varje sorts produkt'}. Med källornas lägsta och högsta värden blir nettot <strong>${massRange(span.low, span.high)}</strong>. Vet ni mer om era produkter, ändra värdet i steg 1.`;
+  $('out-note').innerHTML = basisSentence(true);
 
   const neg = $('out-negative');
   neg.hidden = res.net >= 0;
   if (res.net < 0) neg.textContent = 'Resorna och driften ger mer utsläpp än de nyköp som undveks. Titta på antagandena om bil och avstånd, eller räkna utan driften om den redan finns av andra skäl.';
+}
+
+// What the net rests on, in words: typical values, the user's own, or a mix,
+// and the span from the sources for the rows that still use them.
+function basisSentence(html) {
+  const own = state.rows.filter((r) => Object.hasOwn(state.overrides, `lca:${r.category}`));
+  const b = (t) => (html ? `<strong>${t}</strong>` : t);
+  if (own.length === state.rows.length) return 'Uträkningen bygger på era egna värden för utsläppen från nya produkter.';
+  const span = spanOfResult();
+  const one = state.rows.length === 1 ? catById[state.rows[0].category] : null;
+  if (!own.length) {
+    return `Uträkningen utgår från ${one ? `ett typiskt värde för ${one.singular}` : 'ett typiskt värde för varje sorts produkt'}. Med källornas lägsta och högsta värden blir nettot ${b(massRange(span.low, span.high))}. Vet ni mer om era produkter, ändra värdet i steg 1.`;
+  }
+  const list = own.map((r) => catById[r.category].plural);
+  const named = list.length > 1 ? `${list.slice(0, -1).join(', ')} och ${list.at(-1)}` : list[0];
+  return `Uträkningen använder era egna värden för ${named} och typiska värden för resten. Med källornas lägsta och högsta värden för resten blir nettot ${b(massRange(span.low, span.high))}.`;
 }
 
 function pct(part, whole) {
@@ -410,16 +430,26 @@ function renderSteps(res) {
     },
   ];
 
-  const focused = document.activeElement?.closest?.('[data-editor]')?.dataset.editor;
+  const typing = document.activeElement?.closest?.('[data-editor]');
+  const typingInput = typing && document.activeElement;
+  const caret = typingInput?.selectionStart ?? null;
 
   $('steps').innerHTML = steps.map((s) => `<li class="step${s.total ? ' step--total' : ''}${s.off ? ' is-off' : ''}">
       <div class="step-body"><h3>${s.title}</h3>${s.body}${(s.editors ?? []).map(editor).join('')}</div>
     </li>`).join('');
 
-  // Keep the caret in the editor the user is typing in.
-  if (focused) {
-    const el = document.querySelector(`[data-editor="${focused}"] input`);
-    if (el) { const v = el.value; el.focus(); el.value = ''; el.value = v; }
+  // Put the editor being typed in back as it was, text and caret included, and
+  // take only its source line and reset button from the fresh render. A number
+  // input cannot hand back "1." as text, so rebuilding it would lose the dot.
+  if (typing) {
+    const fresh = document.querySelector(`[data-editor="${typing.dataset.editor}"]`);
+    if (fresh) {
+      typing.querySelector('.editor-source').innerHTML = fresh.querySelector('.editor-source').innerHTML;
+      typing.querySelector('[data-reset]').disabled = fresh.querySelector('[data-reset]').disabled;
+      fresh.replaceWith(typing);
+      typingInput.focus();
+      try { if (caret != null) typingInput.setSelectionRange(caret, caret); } catch { /* number inputs have no selection API */ }
+    }
   }
 }
 
@@ -484,6 +514,7 @@ $('steps').addEventListener('input', (e) => {
   if (!ed) return;
   const key = ed.dataset.editor;
   const msg = ed.querySelector('.editor-msg');
+  if (e.target.validity?.badInput) return; // mid-number, like "1." on its way to "1.9"
   const err = problem(key, e.target.value);
   if (err) { msg.textContent = err; return; }
   state.overrides[key] = Number(e.target.value);
@@ -523,10 +554,10 @@ function plainText() {
     return 'exempelvärde utan källa';
   };
   const f = (key) => field(key).value;
-  const span = spanOfResult();
   const L = [];
   L.push(`CCC, Circular Consumption Calculator: ${res.rows.map((r) => `${r.count.toLocaleString('sv-SE')} ${catById[r.category].plural}`).join(', ')} som ${METHODS[state.method].label}`);
-  L.push(`Netto: ${mass(res.net)} koldioxidekvivalenter som inte släpptes ut. Med källornas lägsta och högsta värden: ${massRange(span.low, span.high)}.`);
+  L.push(`Netto: ${res.net < 0 ? `${mass(-res.net)} koldioxidekvivalenter mer än om ingenting hade cirkulerats` : `${mass(res.net)} koldioxidekvivalenter som inte släpptes ut`}.`);
+  L.push(basisSentence(false));
   L.push('');
   L.push('1. Om allt hade köpts nytt:');
   for (const r of res.rows) L.push(`   ${r.count.toLocaleString('sv-SE')} ${catById[r.category].plural} × ${num(r.lca)} kg (${src(`lca:${r.category}`)}) = ${mass(r.potential)}`);
