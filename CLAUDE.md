@@ -17,7 +17,7 @@ Open-source tool that calculates climate-impact savings from circulating product
 
 - Notion: https://www.notion.so/35cb0484bfa48188bb0bff6fab4396e6
 - Drive: (set after first /project create completes)
-- Landing page: https://swinga.coop/calculator
+- Live: https://ccc.henricbarkman.se (Cloudflare Pages project `ccc`, pages.dev name `ccc-cqo`). The old swinga.coop/calculator page is no longer ours to maintain.
 - Custom GPT (live): https://chat.openai.com/g/g-8E20qS8aO-circular-consumption-calculator
 - Parent (generalassistant): `~/generalassistant`
 
@@ -40,6 +40,18 @@ Open-source tool that calculates climate-impact savings from circulating product
 - Wix site revision 1436 was unchanged between March and September 2026, so the page broke because the widget script went away, not because anyone edited the page.
 - No Lovable/Antigravity code for the calculator was found: not in any GitHub repo (henricbarkman, SwingaOrg), not in Demi's Drive view, not in mail. `henricbarkman/AI-for-Climate` is AIda's predecessor, not this.
 
+## Deploy
+
+Static, no build. From a neutral cwd (so wrangler does not autogenerate `wrangler.jsonc` in the repo):
+
+```
+cd /tmp && set -a && . /home/henric/generalassistant/.env && set +a && \
+CLOUDFLARE_API_TOKEN="$CLOUDFLARE_PAGES_TOKEN" npx wrangler pages deploy \
+  /home/henric/generalassistant/projects/aik-circular-consumption-calculator/app --project-name ccc --branch main
+```
+
+Never pass `--force` again: it was needed once to create the project on classic Pages instead of letting wrangler 4.144 delegate to Workers (which the Pages token cannot do). Smoke test https://ccc.henricbarkman.se after every deploy.
+
 ## Status
 
-No code yet. Next step: decide implementation stack (likely a static web app with a backend that runs the LLM-driven calculation flow, or a deterministic non-LLM calculator with the same methodology) and build a minimal first version.
+CCC is live, desktop-first, with sourced factors and hand-worked tests (`node --test tests/*.test.mjs`). Henric's decisions 2026-09-30: name CCC, no mention of or link to Swinga, replacement share 50 %, car factor 0.17. Progress log: PROGRESS.md.

@@ -1,4 +1,9 @@
-# PROGRESS — Klimatnyttan av cirkulär konsumtion
+# PROGRESS — CCC, Circular Consumption Calculator
+
+## 2026-09-30 (eftermiddag)
+- Henric: namnet CCC på ccc.henricbarkman.se, inget om Swinga, 50 % och 0,17 gäller. Prototypen kändes för mobilanpassad, den används mest på dator.
+- Demi: datorlayout med resultatet i en fast panel bredvid frågan och stegen. Adversariell granskning: länkparametrar gick att få att krascha sidan eller ge fel resultat, avrundning dolde värdet som räknades; allt rättat och provat i webbläsare. Drift för annat än kläder märkt som antagande. Publicerad på Cloudflare Pages.
+- → Nästa: utred antagandena om föremål per besök (Henric: "nästa steg"). Sedan inbäddningsläge för Arvika och Smarta Kartan, engelska, CSV-uppladdning.
 
 ## 2026-09-30
 - Demi: utredde swinga.coop/calculator (AgentiveHub-skriptet 404, GPT-länken har 0 i stället för O). Ingen gammal kod finns.
