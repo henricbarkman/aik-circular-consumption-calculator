@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Klimatnyttan av cirkulär konsumtion | Henric Barkman</title>
+  <meta name="description" content="Räkna ut hur mycket utsläpp second hand, uthyrning och utlåning undviker. Varje steg i uträkningen syns och går att ändra.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,600;9..40,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="wrap topline">
+    <a href="https://henricbarkman.se">Henric Barkman</a>
+    <span>Klimatnyttan av cirkulär konsumtion</span>
+  </div>
+
+  <main>
+    <section class="wrap ask" aria-label="Vad vill du räkna på?">
+      <h1>
+        Hos oss har
+        <label class="visually-hidden" for="in-count">Antal</label><input class="slot" id="in-count" type="number" inputmode="numeric" min="1" step="1">
+        <label class="visually-hidden" for="in-cat">Vad</label><select class="slot" id="in-cat"></select>
+        <label class="visually-hidden" for="in-method">Hur</label><select class="slot" id="in-method"></select>.
+      </h1>
+      <p class="ask-sub">Vad betydde det för klimatet? Svaret står här nedanför. Alla tal i uträkningen går att öppna, se källan till och byta mot era egna.</p>
+    </section>
+
+    <section class="result" aria-live="polite" aria-atomic="true">
+      <div class="wrap">
+        <div>
+          <p class="result-figure" id="out-figure"></p>
+          <p class="result-caption">koldioxidekvivalenter som inte släpptes ut.</p>
+        </div>
+        <div>
+          <p class="result-note" id="out-note"></p>
+          <p class="negative-note" id="out-negative" hidden></p>
+          <div class="result-actions">
+            <button class="btn" type="button" id="btn-copy">Kopiera uträkningen</button>
+            <button class="btn" type="button" id="btn-link">Kopiera länk till uträkningen</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="wrap flow" aria-labelledby="flow-h">
+      <h2 id="flow-h">Från största möjliga nytta till netto</h2>
+      <p class="flow-intro" id="flow-intro"></p>
+      <ul class="legend" id="legend"></ul>
+      <div class="bars" id="bars"></div>
+    </section>
+
+    <section class="wrap steps" aria-labelledby="steps-h">
+      <div class="steps-head">
+        <h2 id="steps-h">Så räknade vi</h2>
+        <ul class="provenance" aria-label="Vad märkena betyder">
+          <li><span class="mark mark--source"></span>Källa</li>
+          <li><span class="mark mark--assumption"></span>Antagande i metoden</li>
+          <li><span class="mark mark--user"></span>Ditt värde</li>
+          <li><span class="mark mark--example"></span>Exempelvärde, källa saknas</li>
+        </ul>
+      </div>
+      <ol class="step-list" id="steps"></ol>
+    </section>
+
+    <section class="wrap sources" aria-labelledby="src-h">
+      <h2 id="src-h">Källor och antaganden</h2>
+      <p class="lead">Varje tal i uträkningen ovan, och var det kommer ifrån.</p>
+      <div class="table-scroll"><table id="src-table"></table></div>
+      <h2 style="margin-top:3rem" id="cat-h">Alla kategorier</h2>
+      <p class="lead">Utsläppen från en ny produkt, lågt och högt räknat.</p>
+      <div class="table-scroll"><table id="cat-table"></table></div>
+    </section>
+
+    <section class="wrap method" aria-labelledby="method-h">
+      <h2 id="method-h">Om metoden</h2>
+      <p>Uträkningen utgår från utsläppen när en ny produkt tillverkas och räknar hur mycket av det som slipper uppstå när någon köper begagnat, hyr eller lånar i stället. Sedan dras det bort som cirkuleringen själv orsakar: resor och drift.</p>
+      <p>Mycket annat som räknar på cirkulär konsumtion utgår från att varje begagnat köp ersätter ett nytt, och att resorna till butiken inte finns. Det gör resultaten för stora. Här syns båda avdragen, och du ser hur mycket de betyder.</p>
+      <h3>Det här räknar verktyget inte med</h3>
+      <ul>
+        <li>Pengar som sparas och läggs på annat. Den som köper en billig begagnad soffa kan resa för mellanskillnaden.</li>
+        <li>Att en begagnad produkt kan ha kortare liv kvar än en ny. Andelen som ersätter ett nyköp fångar en del av det.</li>
+        <li>Tvätt, lagning och transporter av varor till butiken, till exempel när någon lämnar in kläder.</li>
+        <li>Vad som händer när produkten till slut slängs.</li>
+      </ul>
+      <h3>Samma metod för avfall, vatten och kemikalier</h3>
+      <p>Byt koldioxidekvivalenter mot kilo avfall, liter vatten eller kemikalier per ny produkt, så fungerar samma steg.</p>
+    </section>
+  </main>
+
+  <footer class="site">
+    <div class="wrap">
+      <p>Metoden togs fram av Henric Barkman för Swinga 2024, först som en chattbot. Det här är samma metod, uträknad i öppen kod så att alla kan granska den.</p>
+      <p><a href="https://github.com/henricbarkman/aik-circular-consumption-calculator">Källkoden på GitHub</a></p>
+    </div>
+  </footer>
+
+  <div class="stickysum" id="stickysum" aria-hidden="true">
+    <div class="wrap"><b id="sticky-figure"></b><span>netto, med värdena du ser nu</span></div>
+  </div>
+  <div class="tooltip" id="tooltip" role="presentation"></div>
+  <div class="toast" id="toast" role="status"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
