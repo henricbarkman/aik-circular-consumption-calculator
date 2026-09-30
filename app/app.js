@@ -83,7 +83,7 @@ function parseCount(raw) {
   return Number.isFinite(n) && n >= 1 && n <= MAX_COUNT ? n : null;
 }
 
-function rowInputs(lcaOf = (row) => field(`lca:${row.category}`).value) {
+function rowInputs(lcaOf = (row) => field(`lca:${row.category}`).value, repairOf = (row) => field(`repairKg:${row.category}`).value) {
   return state.rows.map((row) => ({
     category: row.category,
     count: row.count,
@@ -91,14 +91,14 @@ function rowInputs(lcaOf = (row) => field(`lca:${row.category}`).value) {
     itemsPerTrip: field(`itemsPerTrip:${row.category}`).value,
     ...(isRepair() ? {
       replacementPct: field(`share:${row.category}`).value,
-      repairKg: field(`repairKg:${row.category}`).value,
+      repairKg: repairOf(row),
     } : {}),
   }));
 }
 
-function inputs(lcaOf) {
+function inputs(lcaOf, repairOf) {
   return {
-    rows: rowInputs(lcaOf),
+    rows: rowInputs(lcaOf, repairOf),
     replacementPct: field('replacementPct').value,
     transportOn: state.transportOn,
     carPct: field('carPct').value,
@@ -111,13 +111,19 @@ function inputs(lcaOf) {
 }
 
 // The same calculation at the low and high end of each source's span. A value
-// the user typed is their own and does not move.
+// the user typed is their own and does not move. A repair's span runs the other
+// way: the lowest net pairs the cheapest new item with the costliest repair.
 function spanOfResult() {
-  const end = (which) => calculate(inputs((row) => {
-    const key = `lca:${row.category}`;
-    return Object.hasOwn(state.overrides, key) ? state.overrides[key] : catById[row.category].lca[which];
-  })).net;
-  return { low: end('low'), high: end('high') };
+  const pick = (name, row, which) => {
+    const key = `${name}:${row.category}`;
+    const def = catById[row.category][name];
+    return Object.hasOwn(state.overrides, key) ? state.overrides[key] : def[which] ?? def.value;
+  };
+  const end = (which, other) => calculate(inputs(
+    (row) => pick('lca', row, which),
+    (row) => pick('repairKg', row, other),
+  )).net;
+  return { low: end('low', 'high'), high: end('high', 'low') };
 }
 
 // ---------- URL: a calculation is a link ----------
@@ -459,7 +465,11 @@ function renderResult(res) {
 
   const neg = $('out-negative');
   neg.hidden = res.net >= 0;
-  if (res.net < 0) neg.textContent = `${isRepair() ? 'Lagningen, resorna och driften' : 'Resorna och driften'} ger mer utsläpp än de nyköp som undveks. Titta på antagandena om bil och avstånd, eller räkna utan driften om den redan finns av andra skäl.`;
+  if (res.net < 0) {
+    neg.textContent = isRepair()
+      ? 'Lagningen, resorna och driften ger mer utsläpp än de nyköp som undveks. Titta på vad en lagning kostar i steg 3 och på andelen som ersätter ett nyköp, sedan på antagandena om bil och avstånd.'
+      : 'Resorna och driften ger mer utsläpp än de nyköp som undveks. Titta på antagandena om bil och avstånd, eller räkna utan driften om den redan finns av andra skäl.';
+  }
 }
 
 // What the net rests on, in words: typical values, the user's own, or a mix,
@@ -740,7 +750,7 @@ function plainText() {
     L.push(`${n++}. Andel som ersätter ett nyköp: ${num(f('replacementPct'))} % (${src('replacementPct')}). Undvikna utsläpp: ${mass(res.avoided)}`);
   }
   if (state.transportOn) {
-    L.push(`${n}. Resor:${num(f('carPct'))} % med bil (${src('carPct')}), ${num(f('trips'))} enkelresor per besök (${src('trips')}), ${num(f('km'))} km (${src('km')}), ${num(f('carEf'))} kg per km (${src('carEf')}) = ${num(res.perTripKg)} kg per besök.`);
+    L.push(`${n}. Resor: ${num(f('carPct'))} % med bil (${src('carPct')}), ${num(f('trips'))} enkelresor per besök (${src('trips')}), ${num(f('km'))} km (${src('km')}), ${num(f('carEf'))} kg per km (${src('carEf')}) = ${num(res.perTripKg)} kg per besök.`);
     for (const r of res.rows) L.push(`   ${catById[r.category].plural}: ${num(r.itemsPerTrip)} per besök (${src(`itemsPerTrip:${r.category}`)}), ${num(r.visits)} besök`);
     L.push(`   ${num(res.visits)} besök × ${num(res.perTripKg)} kg = ${mass(res.transportKg)}`);
   } else L.push(`${n}. Resor: inte medräknade.`);
