@@ -1,5 +1,10 @@
 # PROGRESS — CCC, Circular Consumption Calculator
 
+## 2026-09-30 (sen kväll)
+- Henric: knappen "Lägg till en sorts produkt" gick inte att trycka på, och rubrikerna syntes utan uträkning. Ja till att kunna ladda upp en lista.
+- Demi: orsaken var cache, inte knappen. Domänen henricbarkman.se låter webbläsare spara .js i fyra timmar medan HTML alltid hämtas färsk, så ny HTML körde gammal JS och kraschade. `bin/deploy.sh` stämplar nu varje filadress med ett fingeravtryck, och allt som bygger på uträkningen är dolt tills den finns. Knappen är nu ett tomt fält i meningen ("+ fler"). Listinläsning (CSV, mall att hämta), där varje rad visas med vad den räknades som. Granskad, fem tysta tapp rättade. Publicerad och provad i Firefox och Chrome.
+- → Nästa: utred föremål per besök. Fler sorter i verktyget om listorna visar vad butikerna faktiskt har (lampor, leksaker, husgeråd).
+
 ## 2026-09-30 (kväll)
 - Henric: spannet i rubriken blir tokigt, utgå från ett mittenvärde (~10 kg per plagg) om användaren inte vet mer. Hur gör man med flera sorters produkter? Listan såg knäpp ut när den öppnades.
 - Demi: ett typiskt värde per kategori (kläder 9 kg enligt Myrorna/Erikshjälpen, annars mitten av källans spann), spannet som en rad under resultatet. Meningen tar flera sorters produkter; resor räknas som besök per sort. Rättade listans upprepade pil och jättestora alternativ. Granskad, ett decimalfel i redigeringsrutorna rättat. Publicerad.
