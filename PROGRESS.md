@@ -1,5 +1,10 @@
 # PROGRESS — CCC, Circular Consumption Calculator
 
+## 2026-09-30 (natt)
+- Henric: kan CCC inte läsa Excel direkt? Lånat och hyrt ger samma resultat, en kategori. Saknar lagat.
+- Demi: Excel (.xlsx, .xls) och .ods läses direkt i webbläsaren; läsaren laddas bara när ett kalkylark väljs, och rapporten säger vilket blad som lästes. Hyrt och lånat är ett sätt, "hyrts eller lånats"; gamla länkar med lånat fungerar. Provat i Firefox och Chrome.
+- → Nästa: lagning som eget sätt, efter utredning av hur en lagning räknas (ersätter ett köp, eller förlänger livet?). Sedan föremål per besök.
+
 ## 2026-09-30 (sen kväll)
 - Henric: knappen "Lägg till en sorts produkt" gick inte att trycka på, och rubrikerna syntes utan uträkning. Ja till att kunna ladda upp en lista.
 - Demi: orsaken var cache, inte knappen. Domänen henricbarkman.se låter webbläsare spara .js i fyra timmar medan HTML alltid hämtas färsk, så ny HTML körde gammal JS och kraschade. `bin/deploy.sh` stämplar nu varje filadress med ett fingeravtryck, och allt som bygger på uträkningen är dolt tills den finns. Knappen är nu ett tomt fält i meningen ("+ fler"). Listinläsning (CSV, mall att hämta), där varje rad visas med vad den räknades som. Granskad, fem tysta tapp rättade. Publicerad och provad i Firefox och Chrome.

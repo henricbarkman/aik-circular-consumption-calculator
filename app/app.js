@@ -125,7 +125,9 @@ function readUrl() {
     if (q.has('per') && !q.has(`per.${q.get('vad')}`)) q.set(`per.${q.get('vad')}`, q.get('per'));
   }
   if (rows.length) state.rows = rows;
-  if (Object.hasOwn(METHODS, q.get('hur') ?? '')) state.method = q.get('hur');
+  // "borrow" was its own method until renting and borrowing were merged.
+  const how = q.get('hur') === 'borrow' ? 'rent' : q.get('hur') ?? '';
+  if (Object.hasOwn(METHODS, how)) state.method = how;
   if (q.get('resor_med') === '0') state.transportOn = false;
   if (q.get('drift_med') === '0') state.opsOn = false;
   for (const [name, key] of Object.entries(URL_KEYS)) {
@@ -272,6 +274,35 @@ const MAX_LIST_BYTES = 2 * 1024 * 1024;
 const MAX_LIST_LINES_SHOWN = 200;
 let listRead = 0;
 
+// The spreadsheet reader is nearly a megabyte, so it loads only when someone
+// actually reads in an Excel or LibreOffice file.
+let spreadsheetLib = null;
+function loadSpreadsheetLib() {
+  spreadsheetLib ??= new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'vendor/xlsx.full.min.js?v=dev';
+    s.onload = () => resolve(window.XLSX);
+    s.onerror = () => { spreadsheetLib = null; reject(new Error('load')); };
+    document.head.append(s);
+  });
+  return spreadsheetLib;
+}
+
+// .xlsx and .ods are zip archives ("PK"); old .xls is an OLE file.
+const isZip = (b) => b[0] === 0x50 && b[1] === 0x4b;
+const isOle = (b) => b[0] === 0xd0 && b[1] === 0xcf && b[2] === 0x11 && b[3] === 0xe0;
+
+/** The first sheet with anything in it, as the same text a CSV would give. */
+async function spreadsheetText(bytes) {
+  const X = await loadSpreadsheetLib();
+  const wb = X.read(bytes, { type: 'array' });
+  const filled = wb.SheetNames.filter((n) => X.utils.sheet_to_csv(wb.Sheets[n], { blankrows: false }).trim());
+  if (!filled.length) return { text: '', sheet: null, others: [] };
+  // Raw numbers: "1 200" formatted for Sweden or "1,200" for the US both come out as 1200.
+  const text = X.utils.sheet_to_csv(wb.Sheets[filled[0]], { FS: ';', rawNumbers: true, blankrows: false });
+  return { text, sheet: filled[0], others: filled.slice(1) };
+}
+
 async function readListFile(file) {
   // Only the file picked last may change the sentence, however the reads finish.
   const mine = ++listRead;
@@ -285,20 +316,32 @@ async function readListFile(file) {
     return listReport(`<p><b>${esc(file.name)}</b> gick inte att läsa. Försök igen, eller spara om filen.</p>`);
   }
   if (mine !== listRead) return;
-  // An .xlsx is a zip archive; its bytes start with "PK".
-  if (bytes[0] === 0x50 && bytes[1] === 0x4b) {
-    return listReport(`<p><b>${esc(file.name)}</b> är en Excel-fil. Spara den som CSV i Excel (Arkiv, Spara som, CSV UTF-8) och läs in den igen.</p>`);
+  let text;
+  let sheetNote = '';
+  if (isZip(bytes) || isOle(bytes)) {
+    let sheet;
+    try {
+      sheet = await spreadsheetText(bytes);
+    } catch {
+      return listReport(`<p><b>${esc(file.name)}</b> gick inte att läsa som kalkylark. Spara den som CSV och läs in den igen.</p>`);
+    }
+    if (mine !== listRead) return;
+    if (!sheet.sheet) return listReport(`<p><b>${esc(file.name)}</b> har inga ifyllda celler.</p>`);
+    text = sheet.text;
+    sheetNote = ` (bladet ${esc(sheet.sheet)}${sheet.others.length ? `; ${sheet.others.length === 1 ? 'bladet' : 'bladen'} ${sheet.others.map(esc).join(', ')} lästes inte` : ''})`;
+  } else {
+    text = decodeList(bytes);
   }
-  const { rows, lines } = parseList(decodeList(bytes), MAX_COUNT);
+  const { rows, lines } = parseList(text, MAX_COUNT);
   const left = lines.filter((l) => l.reason !== 'ok');
   if (!rows.length) {
-    return listReport(`<p>Ingen rad i <b>${esc(file.name)}</b> gick att räkna, så meningen är oförändrad. Varje rad behöver en sort och ett antal, till exempel <i>Tröjor;300</i>.</p>${lineTable(lines)}`);
+    return listReport(`<p>Ingen rad i <b>${esc(file.name)}</b>${sheetNote} gick att räkna, så meningen är oförändrad. Varje rad behöver en sort och ett antal, till exempel <i>Tröjor;300</i>.</p>${lineTable(lines)}`);
   }
   state.rows = rows;
   pruneOverrides(); fillSentence(); render();
   const total = rows.reduce((a, r) => a + r.count, 0).toLocaleString('sv-SE');
   const n = rows.length;
-  listReport(`<p>Från <b>${esc(file.name)}</b>: ${total} produkter i ${n} ${n === 1 ? 'sort' : 'sorter'}, nu i meningen ovan.${left.length ? ` <b>${left.length} ${left.length === 1 ? 'rad räknas' : 'rader räknas'} inte med.</b>` : ''}</p>
+  listReport(`<p>Från <b>${esc(file.name)}</b>${sheetNote}: ${total} produkter i ${n} ${n === 1 ? 'sort' : 'sorter'}, nu i meningen ovan.${left.length ? ` <b>${left.length} ${left.length === 1 ? 'rad räknas' : 'rader räknas'} inte med.</b>` : ''}</p>
     <details${left.length ? ' open' : ''}><summary>Så läste vi listan</summary>${lineTable(lines)}</details>`);
 }
 

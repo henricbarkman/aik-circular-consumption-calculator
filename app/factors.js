@@ -24,22 +24,15 @@ export const METHODS = {
       why: 'En resa dit och en hem. Den som köper second hand gör en tur och retur per köp.',
     },
   },
+  // Renting and borrowing count the same way: fetch, use, return. One method,
+  // so the sentence does not offer two choices that give the same answer.
   rent: {
     id: 'rent',
-    label: 'hyrts',
+    label: 'hyrts eller lånats',
     tripsPerCirculation: {
       value: 4,
       kind: 'assumption',
       why: 'Två turer och returer: en för att hämta, en för att lämna tillbaka.',
-    },
-  },
-  borrow: {
-    id: 'borrow',
-    label: 'lånats',
-    tripsPerCirculation: {
-      value: 4,
-      kind: 'assumption',
-      why: 'Som att hyra: en tur och retur för att hämta och en för att lämna tillbaka.',
     },
   },
 };
