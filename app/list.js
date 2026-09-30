@@ -59,7 +59,7 @@ export function typesOf(name) {
 /** A count as people write it: "1200", "1 200", "1.200", "300 st". Null if it is not one. */
 export function parseAmount(cell) {
   let s = String(cell).trim().replace(/[\s  ]/g, '').replace(/(st|st\.|stycken|pcs)$/i, '');
-  if (/^\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, '');
+  if (/^[1-9]\d{0,2}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, '');
   if (!/^\d+([.,]\d+)?$/.test(s)) return null;
   return Number(s.replace(',', '.'));
 }
@@ -86,14 +86,13 @@ function splitLine(line, sep) {
   return cells.map((c) => c.trim());
 }
 
+// A separator is one most lines have. A single comma inside a name ("Tröjor,
+// barn 100") must not turn the whole file into comma-separated cells.
 function guessSeparator(lines) {
-  const sample = lines.slice(0, 8).join('\n');
-  const count = (ch) => sample.split(ch).length - 1;
-  if (count('\t')) return '\t';
-  const semi = count(';');
-  const comma = count(',');
-  if (semi && semi >= comma) return ';';
-  if (comma) return ',';
+  const sample = lines.slice(0, 20);
+  for (const ch of ['\t', ';', ',']) {
+    if (sample.filter((l) => l.includes(ch)).length >= Math.max(1, sample.length * 0.6)) return ch;
+  }
   return null;
 }
 
@@ -112,26 +111,30 @@ export function decodeList(bytes) {
  * @returns {{rows: {category: string, count: number}[], lines: {name: string, count: number|null, category: string|null, reason: string, types?: string[]}[]}}
  *   rows: one per product type, counts added up, in order of first appearance.
  *   lines: every line that was counted or needs the reader's attention.
- *   reason: 'ok' | 'unknown' | 'ambiguous' | 'nocount' | 'numbers' | 'toomany'
+ *   reason: 'ok' | 'unknown' | 'ambiguous' | 'nocount' | 'numbers' | 'decimal' | 'toomany'
  */
 export function parseList(text, maxCount = 1e8) {
   const raw = text.split(/\r\n|\r|\n/).map((l) => l.trim()).filter(Boolean);
   const sep = guessSeparator(raw);
   let table = raw.map((l) => splitLine(l, sep));
 
-  // A first line without numbers is a header. If it names the columns, use them.
+  // A first line is a header when it has no numbers and names a column. A first
+  // line like "Tröjor;" is data, and is reported like any other.
   let nameCol = null;
   let countCol = null;
-  if (table.length && table[0].every((c) => parseAmount(c) == null)) {
+  const looksLikeHeader = (cells) => cells.every((c) => parseAmount(c) == null)
+    && cells.some((c) => HEAD_COUNT.test(norm(c)) || HEAD_NAME.test(norm(c)));
+  if (table.length && looksLikeHeader(table[0])) {
     const head = table[0].map(norm);
     const c = head.findIndex((h) => HEAD_COUNT.test(h));
     if (c >= 0) {
       countCol = c;
       // "Artikelnr" names a column, but one of numbers: the name is where the text is.
       const body = table.slice(1);
-      const n = head.findIndex((h, i) => i !== c && HEAD_NAME.test(h)
-        && body.some((r) => r[i] && parseAmount(r[i]) == null));
-      if (n >= 0) nameCol = n;
+      const isName = (h, i) => i !== c && HEAD_NAME.test(h) && body.some((r) => r[i] && parseAmount(r[i]) == null);
+      const ids = /(nr|nummer|kod|id)$/;
+      const n = [...head.keys()].sort((a, b) => ids.test(head[a]) - ids.test(head[b])).find((i) => isName(head[i], i));
+      if (n != null) nameCol = n;
     }
     table = table.slice(1);
   }
@@ -150,13 +153,15 @@ export function parseList(text, maxCount = 1e8) {
     else if (nums.length > 1) reason = 'numbers';
 
     if (reason === 'ok' && amount == null) {
-      // A blank count on a known type is a line from the template the shop does
-      // not have. Anything else without a count is shown, so nothing vanishes.
-      if (types.length === 1 && cells.every((c, i) => i === cells.indexOf(name) || !c.trim())) continue;
+      // A known type followed by empty cells is a template line the shop left
+      // blank. Anything else without a count is shown, so nothing vanishes.
+      const blank = cells.length > 1 && cells.every((c, i) => i === cells.indexOf(name) || !c.trim());
+      if (types.length === 1 && blank) continue;
       reason = 'nocount';
     }
-    const count = amount == null ? null : Math.round(amount);
-    if (reason === 'ok' && count === 0) continue;
+    if (reason === 'ok' && !Number.isInteger(amount)) reason = 'decimal';
+    const count = amount;
+    if (reason === 'ok' && count === 0) continue; // none of them: nothing to count or to lose
     if (reason === 'ok' && types.length === 0) reason = 'unknown';
     if (reason === 'ok' && types.length > 1) reason = 'ambiguous';
 

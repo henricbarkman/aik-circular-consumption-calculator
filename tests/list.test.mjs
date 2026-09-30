@@ -104,3 +104,39 @@ test('a count that would pass the limit is shown, not silently capped', () => {
   assert.deepEqual(res.rows, [{ category: 'klader', count: 90000000 }]);
   assert.equal(byName(res).Jeans.reason, 'toomany');
 });
+
+// From the adversarial review 2026-09-30: every one of these lost lines silently.
+
+test('one comma inside a name does not make the whole file comma-separated', () => {
+  const res = parseList('Tröjor, barn 100\nSkor 200\nBord 50\n');
+  assert.deepEqual(res.rows, [
+    { category: 'klader', count: 100 },
+    { category: 'skor', count: 200 },
+    { category: 'bord', count: 50 },
+  ]);
+});
+
+test('a count with decimals is shown, not rounded into the total', () => {
+  const res = parseList('Tröjor 1,5\nSkor 3\n');
+  assert.deepEqual(res.rows, [{ category: 'skor', count: 3 }]);
+  assert.equal(byName(res).Tröjor.reason, 'decimal');
+  assert.equal(parseAmount('0.500'), 0.5);   // not five hundred
+});
+
+test('a first line that is data is not swallowed as a header', () => {
+  assert.deepEqual(parseList('Tröjor;300\nSkor;200\n').rows.length, 2);
+  const res = parseList('Tröjor:300\n');
+  assert.equal(res.lines.length, 1);          // unreadable, but shown
+  assert.equal(res.lines[0].reason, 'nocount');
+});
+
+test('a line with neither separator nor count in a separated file is shown', () => {
+  const res = parseList('Sort;Antal\nTröjor;300\nSkor\n');
+  assert.deepEqual(res.rows, [{ category: 'klader', count: 300 }]);
+  assert.equal(byName(res).Skor.reason, 'nocount');
+});
+
+test('a text article number does not take the name column', () => {
+  const res = parseList('Artikelnr;Sort;Antal\nA-1;Tröjor;5\n');
+  assert.deepEqual(res.rows, [{ category: 'klader', count: 5 }]);
+});

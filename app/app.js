@@ -241,6 +241,7 @@ const REASON = {
   unknown: 'Inte med: sorten finns inte i verktyget',
   nocount: 'Inte med: inget antal',
   numbers: 'Inte med: flera tal på raden. Ge kolumnen med antal rubriken Antal.',
+  decimal: 'Inte med: antalet är inte ett heltal',
   toomany: `Inte med: fler än ${MAX_COUNT.toLocaleString('sv-SE')} av samma sort`,
 };
 
@@ -267,8 +268,23 @@ ask.addEventListener('drop', (e) => {
   readListFile(file);
 });
 
+const MAX_LIST_BYTES = 2 * 1024 * 1024;
+const MAX_LIST_LINES_SHOWN = 200;
+let listRead = 0;
+
 async function readListFile(file) {
-  const bytes = new Uint8Array(await file.arrayBuffer());
+  // Only the file picked last may change the sentence, however the reads finish.
+  const mine = ++listRead;
+  if (file.size > MAX_LIST_BYTES) {
+    return listReport(`<p><b>${esc(file.name)}</b> är större än 2 MB. En lista med sort och antal per rad brukar vara några kilobyte: kontrollera att det är rätt fil.</p>`);
+  }
+  let bytes;
+  try {
+    bytes = new Uint8Array(await file.arrayBuffer());
+  } catch {
+    return listReport(`<p><b>${esc(file.name)}</b> gick inte att läsa. Försök igen, eller spara om filen.</p>`);
+  }
+  if (mine !== listRead) return;
   // An .xlsx is a zip archive; its bytes start with "PK".
   if (bytes[0] === 0x50 && bytes[1] === 0x4b) {
     return listReport(`<p><b>${esc(file.name)}</b> är en Excel-fil. Spara den som CSV i Excel (Arkiv, Spara som, CSV UTF-8) och läs in den igen.</p>`);
@@ -286,8 +302,12 @@ async function readListFile(file) {
     <details${left.length ? ' open' : ''}><summary>Så läste vi listan</summary>${lineTable(lines)}</details>`);
 }
 
-function lineTable(lines) {
-  if (!lines.length) return '';
+function lineTable(all) {
+  if (!all.length) return '';
+  // Lines left out first: they are the ones that need reading.
+  const sorted = [...all.filter((l) => l.reason !== 'ok'), ...all.filter((l) => l.reason === 'ok')];
+  const lines = sorted.slice(0, MAX_LIST_LINES_SHOWN);
+  const more = sorted.length - lines.length;
   const what = (l) => {
     if (l.reason === 'ok') return esc(catById[l.category].plural);
     if (l.reason === 'ambiguous') return `Inte med: passar både ${l.types.map((t) => esc(catById[t].plural)).join(' och ')}. Dela upp raden.`;
@@ -295,7 +315,7 @@ function lineTable(lines) {
   };
   return `<div class="table-scroll"><table class="list-lines"><thead><tr><th>Rad i listan</th><th>Antal</th><th>Räknas som</th></tr></thead><tbody>${
     lines.map((l) => `<tr${l.reason === 'ok' ? '' : ' class="is-left"'}><td>${esc(l.name)}</td><td class="num">${l.count == null ? '' : l.count.toLocaleString('sv-SE')}</td><td>${what(l)}</td></tr>`).join('')
-  }</tbody></table></div>`;
+  }</tbody></table></div>${more ? `<p>Och ${more.toLocaleString('sv-SE')} rader till.</p>` : ''}`;
 }
 
 function listReport(html) {
@@ -677,7 +697,9 @@ try {
   readUrl();
   fillSentence();
   // Shown before the first render, so the chart can measure its own width.
-  document.documentElement.classList.remove('is-pending');
+  // is-broken too: an unrelated error (an extension, say) during loading must
+  // not leave the failure message above a working calculator.
+  document.documentElement.classList.remove('is-pending', 'is-broken');
   render();
 } catch (err) {
   document.documentElement.classList.add('is-pending', 'is-broken');
