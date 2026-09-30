@@ -1,5 +1,10 @@
 # PROGRESS — CCC, Circular Consumption Calculator
 
+## 2026-09-30 (kväll)
+- Henric: spannet i rubriken blir tokigt, utgå från ett mittenvärde (~10 kg per plagg) om användaren inte vet mer. Hur gör man med flera sorters produkter? Listan såg knäpp ut när den öppnades.
+- Demi: ett typiskt värde per kategori (kläder 9 kg enligt Myrorna/Erikshjälpen, annars mitten av källans spann), spannet som en rad under resultatet. Meningen tar flera sorters produkter; resor räknas som besök per sort. Rättade listans upprepade pil och jättestora alternativ. Granskad, ett decimalfel i redigeringsrutorna rättat. Publicerad.
+- → Nästa: utred föremål per besök. Uppladdning av en lista (CSV) för butiker med många sorter, om rad-för-rad blir för trögt.
+
 ## 2026-09-30 (eftermiddag)
 - Henric: namnet CCC på ccc.henricbarkman.se, inget om Swinga, 50 % och 0,17 gäller. Prototypen kändes för mobilanpassad, den används mest på dator.
 - Demi: datorlayout med resultatet i en fast panel bredvid frågan och stegen. Adversariell granskning: länkparametrar gick att få att krascha sidan eller ge fel resultat, avrundning dolde värdet som räknades; allt rättat och provat i webbläsare. Drift för annat än kläder märkt som antagande. Publicerad på Cloudflare Pages.
