@@ -25,15 +25,41 @@ const FIELDS = {
     get: () => ({ value: { low: cat().lca.low, high: cat().lca.high }, ...cat().lca }),
     chip: (v) => `${num(v.low)}–${num(v.high)} kg`,
     min: 0,
+    max: 100000,
   },
   replacementPct: { label: () => 'Andel som ersätter ett nyköp', unit: '%', get: () => SHARED.replacementShare, chip: (v) => `${num(v)} %`, min: 0, max: 100 },
   carPct: { label: () => 'Andel av besöken som görs med bil', unit: '%', get: () => SHARED.carShare, chip: (v) => `${num(v)} %`, min: 0, max: 100 },
-  trips: { label: () => 'Enkelresor per cirkulering', unit: 'resor', get: () => METHODS[state.method].tripsPerCirculation, chip: (v) => `${num(v)} ${v === 1 ? 'resa' : 'resor'}`, min: 0 },
-  km: { label: () => 'Avstånd en väg', unit: 'km', get: () => SHARED.kmPerTrip, chip: (v) => `${num(v)} km`, min: 0 },
-  carEf: { label: () => 'Utsläpp per bilkilometer', unit: 'kg per km', get: () => SHARED.carEf, chip: (v) => `${num(v)} kg per km`, min: 0, step: 0.01 },
-  itemsPerTrip: { label: () => 'Föremål per besök', unit: 'st', get: () => cat().itemsPerTrip, chip: (v) => `${num(v)} föremål`, min: 0.1, step: 0.5 },
-  opEf: { label: () => 'Driftens utsläpp per föremål', unit: 'kg', get: () => SHARED.opEfPerItem, chip: (v) => `${num(v)} kg`, min: 0, step: 0.1 },
+  trips: { label: () => 'Enkelresor per cirkulering', unit: 'resor', get: () => METHODS[state.method].tripsPerCirculation, chip: (v) => `${num(v)} ${v === 1 ? 'resa' : 'resor'}`, min: 0, max: 100 },
+  km: { label: () => 'Avstånd en väg', unit: 'km', get: () => SHARED.kmPerTrip, chip: (v) => `${num(v)} km`, min: 0, max: 10000 },
+  carEf: { label: () => 'Utsläpp per bilkilometer', unit: 'kg per km', get: () => SHARED.carEf, chip: (v) => `${num(v)} kg per km`, min: 0, max: 10, step: 0.01 },
+  itemsPerTrip: { label: () => 'Föremål per besök', unit: 'st', get: () => cat().itemsPerTrip, chip: (v) => `${num(v)} föremål`, min: 0.1, max: 1000, step: 0.5 },
+  opEf: { label: () => 'Driftens utsläpp per föremål', unit: 'kg', get: () => (state.category === 'klader' ? SHARED.opEfPerItem : SHARED.opEfPerItemOther), chip: (v) => `${num(v)} kg`, min: 0, max: 10000, step: 0.1 },
 };
+
+const MAX_COUNT = 100000000;
+
+// One check for a typed or linked value, so a link can never hold a number the
+// editor would refuse. Returns an error message, or '' when the value is fine.
+function problem(name, raw) {
+  const d = FIELDS[name];
+  const bad = `Skriv ett tal från ${num(d.min)} till ${num(d.max)}.`;
+  if (d.range) {
+    if (raw.low === '' || raw.high === '') return bad;
+    const low = Number(raw.low); const high = Number(raw.high);
+    if (![low, high].every((v) => Number.isFinite(v) && v >= d.min && v <= d.max)) return bad;
+    if (low > high) return 'Det låga värdet kan inte vara högre än det höga.';
+    return '';
+  }
+  if (raw === '' || raw == null) return bad;
+  const v = Number(raw);
+  return Number.isFinite(v) && v >= d.min && v <= d.max ? '' : bad;
+}
+
+function parseCount(raw) {
+  if (raw == null || raw === '') return null;
+  const n = Math.round(Number(raw));
+  return Number.isFinite(n) && n >= 1 && n <= MAX_COUNT ? n : null;
+}
 
 function cat() { return catById[state.category]; }
 
@@ -71,18 +97,19 @@ const URL_KEYS = { lca: ['lo', 'hi'], replacementPct: 'r', carPct: 'bil', trips:
 
 function readUrl() {
   const q = new URLSearchParams(location.search);
-  if (catById[q.get('vad')]) state.category = q.get('vad');
-  if (METHODS[q.get('hur')]) state.method = q.get('hur');
-  const n = Number(q.get('antal'));
-  if (Number.isFinite(n) && n > 0) state.count = Math.round(n);
+  if (Object.hasOwn(catById, q.get('vad') ?? '')) state.category = q.get('vad');
+  if (Object.hasOwn(METHODS, q.get('hur') ?? '')) state.method = q.get('hur');
+  const n = parseCount(q.get('antal'));
+  if (n) state.count = n;
   if (q.get('resor_med') === '0') state.transportOn = false;
   if (q.get('drift_med') === '0') state.opsOn = false;
-  const lo = Number(q.get('lo')); const hi = Number(q.get('hi'));
-  if (q.has('lo') && q.has('hi') && lo >= 0 && hi >= lo) state.overrides.lca = { low: lo, high: hi };
+  if (q.has('lo') && q.has('hi')) {
+    const raw = { low: q.get('lo'), high: q.get('hi') };
+    if (!problem('lca', raw)) state.overrides.lca = { low: Number(raw.low), high: Number(raw.high) };
+  }
   for (const [name, key] of Object.entries(URL_KEYS)) {
     if (name === 'lca' || !q.has(key)) continue;
-    const v = Number(q.get(key));
-    if (Number.isFinite(v) && v >= 0) state.overrides[name] = v;
+    if (!problem(name, q.get(key))) state.overrides[name] = Number(q.get(key));
   }
 }
 
@@ -128,8 +155,8 @@ function sizeSlots() {
 }
 
 inCount.addEventListener('input', () => {
-  const n = Math.round(Number(inCount.value));
-  if (Number.isFinite(n) && n > 0) { state.count = n; render(); }
+  const n = parseCount(inCount.value);
+  if (n) { state.count = n; render(); }
   sizeSlots();
 });
 inCat.addEventListener('change', () => {
@@ -161,9 +188,9 @@ function editor(name) {
   const hidden = openField === name ? '' : 'hidden';
   const step = d.step ?? 1;
   const inputsHtml = d.range
-    ? `<span>Lågt<input type="number" data-part="low" min="${d.min}" step="any" value="${f.value.low}"></span>
-       <span>Högt<input type="number" data-part="high" min="${d.min}" step="any" value="${f.value.high}"></span>`
-    : `<span>${d.unit}<input type="number" min="${d.min}" ${d.max != null ? `max="${d.max}"` : ''} step="${step}" value="${f.value}"></span>`;
+    ? `<span>Lågt<input type="number" data-part="low" min="${d.min}" max="${d.max}" step="any" value="${f.value.low}"></span>
+       <span>Högt<input type="number" data-part="high" min="${d.min}" max="${d.max}" step="any" value="${f.value.high}"></span>`
+    : `<span>${d.unit}<input type="number" min="${d.min}" max="${d.max}" step="${step}" value="${f.value}"></span>`;
   return `<div class="editor" id="editor-${name}" data-editor="${name}" ${hidden}>
     <label>${d.label()}${d.range ? `, ${d.unit}` : ''}</label>
     <div class="editor-fields">${inputsHtml}</div>
@@ -207,9 +234,15 @@ function render() {
 function renderResult(res) {
   const c = cat();
   const lca = field('lca').value;
-  const [figure, unit] = splitUnit(massRange(res.low.net, res.high.net));
-  $('out-figure').innerHTML = `${figure}<span class="unit">${unit}</span>`;
+  // An all-negative range is shown as its size; the caption carries the sign.
+  const allNeg = res.high.net < 0;
+  const [figure, unit] = splitUnit(allNeg ? massRange(-res.high.net, -res.low.net) : massRange(res.low.net, res.high.net));
+  $('out-figure').innerHTML = `${figure}<span class="unit"> ${unit}</span>`;
   $('out-note').innerHTML = `Spannet finns för att ${c.singular} ger allt från <strong>${num(lca.low)}</strong> till <strong>${num(lca.high)} kg</strong>, beroende på vad det är. Vi räknar med båda ändarna hela vägen, i stället för ett snitt som döljer osäkerheten.`;
+  // Below zero the figure is extra emissions, and the caption has to say so.
+  $('out-caption').textContent = allNeg
+    ? 'koldioxidekvivalenter mer än om ingenting hade cirkulerats.'
+    : 'koldioxidekvivalenter som inte släpptes ut.';
   const neg = $('out-negative');
   if (res.low.net < 0) {
     neg.hidden = false;
@@ -240,7 +273,7 @@ const SEGMENTS = [
 
 function renderBars(res) {
   const c = cat();
-  $('flow-intro').textContent = `Varje stapel är hela nyttan om alla ${state.count.toLocaleString('sv-SE')} ${c.plural} hade ersatt ett nyköp. Färgerna visar hur stor del som blir kvar och vart resten tar vägen.`;
+  $('flow-intro').textContent = `Varje stapel är hela nyttan om alla ${state.count.toLocaleString('sv-SE')} ${c.plural} hade ersatt ett nyköp. Färgerna visar hur stor del som blir kvar och vart resten tar vägen.${res.low.net < 0 ? ' Där nettot är negativt finns ingen grön del: resor och drift kostar då mer än det som undveks, och stapeln blir längre än nyttan.' : ''}`;
   $('legend').innerHTML = SEGMENTS.map((s) => `<li><span class="swatch" style="background:${s.color}"></span>${s.label}</li>`).join('');
   const lca = field('lca').value;
   const rows = [
@@ -270,7 +303,7 @@ function renderBars(res) {
       return `<path data-tip="${seg.label}: ${mass(v)}" d="${d}" fill="${seg.color}"></path>`;
     }).join('');
     return `<div class="bar-row">
-      <p><b>${name}:</b> ${s.net >= 0 ? `netto ${mass(s.net)}` : `netto minus ${mass(-s.net)}`} av möjliga ${mass(s.potential)}.${cost > 0 ? ` Resor och drift drar bort ${mass(cost)}, ${pct(cost, s.avoided)} av det som undveks.` : ''}</p>
+      <p><b>${name}:</b> ${s.net >= 0 ? `netto ${mass(s.net)}` : `netto minus ${mass(-s.net)}`} av möjliga ${mass(s.potential)}.${cost > 0 ? ` Resor och drift drar bort ${mass(cost)}${s.avoided > 0 ? `, ${pct(cost, s.avoided)} av det som undveks` : ''}.` : ''}</p>
       <svg role="img" viewBox="0 0 ${width} 28" aria-label="${name}: netto ${mass(s.net)}, resor ${mass(res.transportKg)}, drift ${mass(res.opsKg)}, ersätter inte ett nyköp ${mass(s.notReplacingLost)}">${rects}</svg>
     </div>`;
   }).join('');
@@ -402,18 +435,12 @@ $('steps').addEventListener('input', (e) => {
   const name = ed.dataset.editor;
   const d = FIELDS[name];
   const msg = ed.querySelector('.editor-msg');
-  if (d.range) {
-    const low = Number(ed.querySelector('[data-part="low"]').value);
-    const high = Number(ed.querySelector('[data-part="high"]').value);
-    if (!(low >= 0) || !(high >= 0)) { msg.textContent = 'Skriv ett tal som är noll eller större.'; return; }
-    if (low > high) { msg.textContent = 'Det låga värdet kan inte vara högre än det höga.'; return; }
-    state.overrides[name] = { low, high };
-  } else {
-    const v = Number(e.target.value);
-    if (e.target.value === '' || !Number.isFinite(v) || v < d.min) { msg.textContent = `Skriv ett tal från ${num(d.min)} och uppåt.`; return; }
-    if (d.max != null && v > d.max) { msg.textContent = `Högst ${num(d.max)} ${d.unit}.`; return; }
-    state.overrides[name] = v;
-  }
+  const raw = d.range
+    ? { low: ed.querySelector('[data-part="low"]').value, high: ed.querySelector('[data-part="high"]').value }
+    : e.target.value;
+  const err = problem(name, raw);
+  if (err) { msg.textContent = err; return; }
+  state.overrides[name] = d.range ? { low: Number(raw.low), high: Number(raw.high) } : Number(raw);
   msg.textContent = '';
   render();
 });

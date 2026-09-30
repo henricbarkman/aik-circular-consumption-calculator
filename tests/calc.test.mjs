@@ -2,7 +2,7 @@
 // it, so a failure points at the arithmetic, not at a snapshot.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { calculate, massRange, mass } from '../app/calc.js';
+import { calculate, massRange, mass, num } from '../app/calc.js';
 import { CATEGORIES, SHARED, METHODS } from '../app/factors.js';
 
 const close = (a, b) => assert.ok(Math.abs(a - b) < 1e-9, `${a} != ${b}`);
@@ -24,7 +24,7 @@ test('clothes, 1 200 items, the page default', () => {
   close(r.low.net, 21.6);                   // 600 − 428.4 − 150
   close(r.high.potential, 24000);           // 1200 × 20
   close(r.high.net, 11421.6);               // 12000 − 578.4
-  assert.equal(massRange(r.low.net, r.high.net), '0,02–11,4 ton');
+  assert.equal(massRange(r.low.net, r.high.net), '0,022–11,4 ton');
 });
 
 test('switching off trips and operations leaves only the avoided purchases', () => {
@@ -56,7 +56,11 @@ test('zero items per visit does not divide by zero', () => {
 });
 
 test('a range with a small low end never shows a bare zero', () => {
-  assert.equal(massRange(22, 11400), '0,02–11,4 ton');
+  assert.equal(massRange(22, 11400), '0,022–11,4 ton');
+  assert.equal(massRange(4, 5000), '0,004–5 ton');
+  assert.equal(massRange(-300, -200), '−300 till −200 kg');
+  assert.equal(massRange(-300, -300), '−300 kg');
+  assert.equal(num(0.007), '0,007');
   assert.equal(massRange(740, 3700), '0,74–3,7 ton');
   assert.equal(massRange(120, 900), '120–900 kg');
   assert.equal(mass(578.4), '578 kg');

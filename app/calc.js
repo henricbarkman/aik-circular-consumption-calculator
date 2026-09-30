@@ -61,7 +61,8 @@ export function num(x) {
   const a = Math.abs(x);
   if (a >= 100) return nf(0).format(Math.round(x));
   if (a >= 10) return nf(1).format(x);
-  return nf(2).format(x);
+  // Three decimals below 10, so an electric car's 0,007 kg per km shows as used.
+  return nf(3).format(x);
 }
 
 /** kg CO2e as kg or ton, whichever reads best. */
@@ -77,13 +78,16 @@ export function mass(kg) {
 /** A low-high pair that shares one unit: "18-90 ton", "740-3 700 kg". */
 export function massRange(lowKg, highKg) {
   const big = Math.max(Math.abs(lowKg), Math.abs(highKg)) >= 1000;
-  if (!big) return `${nf(0).format(Math.round(lowKg))}–${nf(0).format(Math.round(highKg))} kg`;
-  // Small ends keep two decimals, so 22 kg reads 0,02 ton and never a bare 0.
+  // A dash between two minus signs reads as noise, so negative ranges say "till".
+  const join = (a, b, unit) => (a === b ? `${a} ${unit}` : `${a}${lowKg < 0 || highKg < 0 ? ' till ' : '–'}${b} ${unit}`);
+  if (!big) return join(nf(0).format(Math.round(lowKg)), nf(0).format(Math.round(highKg)), 'kg');
+  // Small ends keep two significant digits, so 22 kg reads 0,022 ton and never a bare 0.
   const f = (kg) => {
     const t = kg / 1000;
     const a = Math.abs(t);
     if (a >= 100) return nf(0).format(Math.round(t));
-    return nf(a >= 1 ? 1 : 2).format(t);
+    if (a >= 1 || a === 0) return nf(1).format(t);
+    return new Intl.NumberFormat('sv-SE', { maximumSignificantDigits: 2 }).format(t);
   };
-  return `${f(lowKg)}–${f(highKg)} ton`;
+  return join(f(lowKg), f(highKg), 'ton');
 }

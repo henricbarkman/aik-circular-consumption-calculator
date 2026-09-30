@@ -96,7 +96,7 @@ a:hover { color: var(--ink); }
     grid-template-areas: 'ask side' 'flow side' 'steps side';
     column-gap: clamp(3rem, 5vw, 5rem);
   }
-  .result { grid-row: 1 / span 3; align-self: start; position: sticky; top: 1.5rem; }
+  .result { grid-row: 1 / span 3; align-self: start; position: sticky; top: 1.5rem; max-height: calc(100vh - 3rem); overflow-y: auto; }
   .ask h1 { font-size: clamp(2.1rem, 3.5vw, 3.7rem); max-width: none; }
   .ask { padding-bottom: 3rem; }
 }
@@ -185,7 +185,7 @@ input.slot::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
   letter-spacing: -0.03em;
   color: var(--mint);
 }
-.result-figure .unit { font-size: 0.5em; letter-spacing: 0; margin-left: 0.15em; }
+.result-figure .unit { font-size: 0.5em; letter-spacing: 0; }
 .result-caption { margin-top: 0.75rem; font-size: 1.2rem; max-width: 30ch; }
 .result-note { color: #B9C4C8; max-width: 44ch; }
 .result-note strong { color: #F2F4F3; font-weight: 600; }

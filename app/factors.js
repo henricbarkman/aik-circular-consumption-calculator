@@ -168,7 +168,7 @@ export const SHARED = {
       { title: 'Second Hand Effect 2025', org: 'Vend', year: 2025, url: 'https://vend.com/news/half-of-second-hand-purchases-replace-new-ones-report-shows' },
       { title: 'Utvärdering av fritidsbanker', org: 'RISE', year: 2020, url: 'https://www.fritidsbanken.se/wp-content/uploads/2020/01/Utvardering-av-fritidsbanker_RISE_rapport.pdf' },
     ],
-    note: 'På Blocket ersatte hälften av köpen ett nyköp 2023. I mätningen 2025 var andelen 40 procent. RISE räknade också med 50 procent för Fritidsbanken, fast 72 procent av låntagarna sa att de hade funderat på att köpa i stället. Metodens utgångsläge är 50 procent.',
+    note: '50 procent är Blockets mätning 2023: hälften av köpen ersatte ett nyköp. I mätningen 2025 var andelen 40 procent. RISE räknade också med 50 procent för Fritidsbanken, fast 72 procent av låntagarna sa att de hade funderat på att köpa i stället.',
     why: 'Alla second hand-köp, lån och hyror ersätter inte ett nyköp. Något är billigare och köps därför i onödan, något hade aldrig köpts alls.',
   },
   carShare: {
@@ -191,6 +191,13 @@ export const SHARED = {
     value: 0.25,
     kind: 'source',
     sources: [{ title: 'Hållbarhetsrapport 2025', org: 'Myrorna', year: 2025, url: 'https://www.myrorna.se/app/uploads/hallbarhetsrapport-2025.pdf' }],
-    note: 'Uträknat ur rapporten: Myrornas hela verksamhet, 437 ton, delat på ungefär 1,75 miljoner sålda plagg. Gäller en kedja av klädbutiker. För stora föremål är driften per styck troligen högre.',
+    note: 'Uträknat ur rapporten: Myrornas hela verksamhet, 437 ton, delat på ungefär 1,75 miljoner sålda plagg. Gäller en kedja av klädbutiker.',
+  },
+  // The same figure for everything that is not clothes: no source measures it,
+  // so it is labelled as the assumption it is.
+  opEfPerItemOther: {
+    value: 0.25,
+    kind: 'assumption',
+    why: 'Samma tal som för kläder, uträknat ur Myrornas hållbarhetsrapport 2025 (437 ton delat på ungefär 1,75 miljoner sålda plagg). Ingen källa mäter driften per styck för större föremål, och den är troligen högre. Byt gärna mot er egen siffra.',
   },
 };
