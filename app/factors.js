@@ -46,17 +46,23 @@ export const METHODS = {
 
 const perVisit = (value, why) => ({ value, kind: 'assumption', why });
 
-// LCA ranges are kg CO2e for one newly produced item, low and high end.
-// The range is deliberate: the method never averages it away.
+// LCA is kg CO2e for one newly produced item. `value` is the typical item the
+// calculation uses; `low` and `high` are the span the sources give, shown next to
+// the result so the uncertainty stays visible without making the headline a range.
 // Categories without a citable per-item figure (children's clothes, toys, tents,
 // bookshelves, prams) are left out rather than guessed.
 export const CATEGORIES = [
   {
     id: 'klader', plural: 'kläder', singular: 'ett nytt klädesplagg',
     lca: {
-      low: 1, high: 20, kind: 'source',
-      sources: [{ title: 'Environmental assessment of Swedish clothing consumption', org: 'Mistra Future Fashion, RISE och Chalmers', year: 2019, url: 'https://research.chalmers.se/publication/514322/file/514322_Fulltext.pdf' }],
-      note: 'Hela livet för ett plagg, med tvätt i Sverige. Från ungefär 1 kg för ett par strumpor till ungefär 20 kg för en jacka (s. 59).',
+      value: 9, low: 1, high: 20, kind: 'source',
+      sources: [
+        { title: 'Hållbarhetsrapport 2025', org: 'Myrorna', year: 2025, url: 'https://www.myrorna.se/app/uploads/hallbarhetsrapport-2025.pdf' },
+        { title: 'Vårt miljöuppdrag', org: 'Erikshjälpen', year: 2025, url: 'https://erikshjalpen.se/en/about-erikshjalpen-second-hand/our-commitments/vart-miljouppdrag/' },
+        { title: 'Environmental assessment of Swedish clothing consumption', org: 'Mistra Future Fashion, RISE och Chalmers', year: 2019, url: 'https://research.chalmers.se/publication/514322/file/514322_Fulltext.pdf' },
+      ],
+      typical: 'Snittet per plagg som Myrorna och Erikshjälpen räknar med, hämtat från Naturskyddsföreningen.',
+      note: 'Spannet kommer från Mistra Future Fashion: ungefär 1 kg för ett par strumpor och ungefär 20 kg för en jacka, hela livet med tvätt i Sverige (s. 59).',
     },
     itemsPerTrip: {
       value: 2.5, kind: 'source',
@@ -86,7 +92,8 @@ export const CATEGORIES = [
   {
     id: 'bord', plural: 'bord', singular: 'ett nytt bord',
     lca: {
-      low: 60.1, high: 120, kind: 'source',
+      value: 60.1, low: 60.1, high: 120, kind: 'source',
+      typical: 'Ett representativt bord enligt ADEME.',
       sources: [ADEME, { title: 'Hållbarhetsanalys av cirkulära möbelflöden', org: 'RISE', year: 2017, url: 'https://cirkularitet.se/wp-content/uploads/2019/02/H%C3%A5llbarhetsanalys-av-cirkul%C3%A4ra-m%C3%B6belfl%C3%B6den.pdf' }],
       note: 'Lågt: ett vanligt bord enligt ADEME. Högt: ett skrivbord med stol enligt RISE, uträknat ur rapportens tal per år.',
     },
@@ -117,7 +124,7 @@ export const CATEGORIES = [
   },
   {
     id: 'borr', plural: 'borrskruvdragare', singular: 'en ny sladdlös borrskruvdragare',
-    lca: { low: 11.8, high: 35.3, kind: 'source', sources: [ADEME_2019], note: 'ADEME anger 23,5 kg med en osäkerhet på 50 procent. Spannet här är 23,5 kg plus och minus 50 procent. Bara en källa finns.' },
+    lca: { value: 23.5, typical: 'ADEME:s värde för en sladdlös borrskruvdragare.', low: 11.8, high: 35.3, kind: 'source', sources: [ADEME_2019], note: 'ADEME anger 23,5 kg med en osäkerhet på 50 procent. Spannet här är 23,5 kg plus och minus 50 procent. Bara en källa finns.' },
     itemsPerTrip: perVisit(1, 'Ett verktyg per lån är det vanliga.'),
     spread: 'Råvarorna i motor och batteri står för mer än hälften.',
   },
@@ -158,6 +165,14 @@ export const CATEGORIES = [
     spread: 'En vattenkokare ligger lägst, en mikrovågsugn högst.',
   },
 ];
+
+// Where no source names a typical item, the calculation uses the middle of the
+// span, and says so.
+for (const c of CATEGORIES) {
+  if (c.lca.value != null) continue;
+  c.lca.value = Math.round((c.lca.low + c.lca.high) * 5) / 10;
+  c.lca.typical = 'Mitten av källans spann, för när ni inte vet mer om era produkter.';
+}
 
 export const SHARED = {
   replacementShare: {

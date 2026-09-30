@@ -19,12 +19,11 @@
   <main>
     <div class="wrap workspace">
     <section class="ask" aria-label="Vad vill du räkna på?">
-      <h1>
-        Hos oss har
-        <label class="visually-hidden" for="in-count">Antal</label><input class="slot" id="in-count" type="number" inputmode="numeric" min="1" step="1">
-        <label class="visually-hidden" for="in-cat">Vad</label><select class="slot" id="in-cat"></select>
+      <h1 id="ask-h1">
+        Hos oss har <span id="sentence-rows"></span>
         <label class="visually-hidden" for="in-method">Hur</label><select class="slot" id="in-method"></select>.
       </h1>
+      <button type="button" class="add-row" id="btn-add-row">Lägg till en sorts produkt</button>
       <p class="ask-sub">Vad betydde det för klimatet? Alla tal i uträkningen går att öppna, se källan till och byta mot era egna.</p>
     </section>
 
@@ -70,7 +69,7 @@
       <p class="lead">Varje tal i uträkningen ovan, och var det kommer ifrån.</p>
       <div class="table-scroll"><table id="src-table"></table></div>
       <h2 style="margin-top:3rem" id="cat-h">Alla kategorier</h2>
-      <p class="lead">Utsläppen från en ny produkt, lågt och högt räknat.</p>
+      <p class="lead">Utsläppen från en ny produkt: värdet uträkningen använder, och spannet källorna anger.</p>
       <div class="table-scroll"><table id="cat-table"></table></div>
     </section>
 
