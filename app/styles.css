@@ -256,6 +256,7 @@ input.slot::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 }
 .result-figure .unit { font-size: 0.5em; letter-spacing: 0; }
 .result-caption { margin-top: 0.75rem; font-size: 1.2rem; max-width: 30ch; }
+.result-help { margin-top: 0.5rem; color: #B9C4C8; font-size: 0.875rem; max-width: 40ch; }
 .result-note { color: #B9C4C8; max-width: 44ch; }
 .result-note strong { color: #F2F4F3; font-weight: 600; }
 

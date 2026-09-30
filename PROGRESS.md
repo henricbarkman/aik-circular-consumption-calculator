@@ -1,5 +1,15 @@
 # PROGRESS — CCC, Circular Consumption Calculator
 
+## 2026-09-30 (granskning)
+- Henric: kör flera granskare, kod, användare, metod och klimatfaktorerna. Alla delar ska vara tipp topp.
+- Demi: fem granskare (kod, användare, metod, faktorer i två delar). Rättat:
+  - Metod: hyrt, lånat och lagat betalar nu resorna utöver ett butiksbesök även för den del som ersätter ett nyköp (loggat i README). Texterna om lagningsandelen, driften och vad som inte räknas stämmer nu med källorna.
+  - Faktorer: kläder 5,2–23,2 kg (ADEME, råvara till butik) i stället för Mistras hela livet; mobiler 55 kg (IVL), datorer 182 kg (ADEME/Arcep 2025) med 89 kg som lägst; tv 328 kg; skidor 29 kg (RISE); köksapparater 36,6 kg; bord 60,1–80,2 kg; elcyklar som egen sort. Lagning av datorer och tv har källsatta värden. ADEME-källorna har rätt årtal.
+  - Användare: "+ fler" hittar inte på ett antal, summarader och okända sorter förklaras, redigeringsrutan och skärmläsare fungerar bättre, förklaring av koldioxidekvivalenter.
+  - Kod: publiceringsskriptet stoppar varje ostämplad filadress.
+- → Väntar på Henric: böcker (svensk källa 0,53 kg gör böcker negativa med standardresorna) och om ett lån ska räknas som ett halvt nyköp (RISE räknar per sak i utlåningen, inte per lån).
+- → Sedan: föremål per besök.
+
 ## 2026-09-30 (natt)
 - Henric: kan CCC inte läsa Excel direkt? Lånat och hyrt ger samma resultat, en kategori. Saknar lagat.
 - Demi: Excel (.xlsx, .xls) och .ods läses direkt i webbläsaren; läsaren laddas bara när ett kalkylark väljs, och rapporten säger vilket blad som lästes. Hyrt och lånat är ett sätt, "hyrts eller lånats"; gamla länkar med lånat fungerar. Provat i Firefox och Chrome.

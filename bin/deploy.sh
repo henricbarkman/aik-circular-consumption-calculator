@@ -13,10 +13,21 @@ cp -r "$root/app/." "$out/"
 v="$(cd "$root/app" && find . -type f -print0 | sort -z | xargs -0 sha256sum | sha256sum | cut -c1-10)"
 grep -rlZ -- '?v=dev' "$out" | xargs -0 sed -i "s/?v=dev/?v=$v/g"
 
-# Every local script, stylesheet and import must carry the stamp.
-if grep -rn -- '?v=dev' "$out" \
-  || grep -nE "from '\./[^'?]+'" "$out"/*.js \
-  || grep -nE '(src|href)="[a-z]+\.(js|css)"' "$out/index.html"; then
+# Every local script, stylesheet and import must carry the stamp: any address
+# ending in .js, .mjs or .css, quoted, in backticks or as a bare attribute, in
+# the page or in any script or stylesheet outside vendor/, that does not carry
+# this deploy's ?v=. External addresses (https://...) are left alone.
+unstamped() {
+  local files
+  mapfile -t files < <(find "$out" -path "$out/vendor" -prune -o -type f \( -name '*.html' -o -name '*.js' -o -name '*.mjs' -o -name '*.css' \) -print)
+  {
+    grep -noE "[\"'\`][^\"'\` ]+\.(js|mjs|css)(\?[^\"'\` ]*)?[\"'\`]" "${files[@]}" | grep -v -- "?v=$v[\"'\`]"
+    grep -noE "(src|href)=[^\"'\` >]+\.(js|mjs|css)[^\"'\` >]*" "${files[@]}" | grep -v -- "?v=$v"
+    grep -noE "url\([^)\"'\` ]+\.(js|mjs|css)[^)]*\)" "${files[@]}" | grep -v -- "?v=$v"
+  } | grep -vE "https?://" || true
+}
+if grep -rn -- '?v=dev' "$out" || [ -n "$(unstamped)" ]; then
+  unstamped
   echo "deploy: an asset address is not stamped, see above" >&2
   exit 1
 fi

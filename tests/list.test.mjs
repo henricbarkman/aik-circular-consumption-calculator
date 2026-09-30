@@ -14,7 +14,7 @@ test('a list saved from Swedish Excel: header, semicolons, compounds, a total li
   ]);
   const l = byName(res);
   assert.equal(l.Bordslampa.reason, 'unknown');  // a lamp, not a table
-  assert.equal(l.Summa.reason, 'unknown');       // never counted twice
+  assert.equal(l.Summa.reason, 'total');         // never counted twice, and said to be a total
   assert.equal(l.Summa.category, null);
 });
 
@@ -93,7 +93,12 @@ test('words that only look like a product type', () => {
   assert.deepEqual(typesOf('Disko'), []);
   assert.deepEqual(typesOf('TV-bänk'), []);
   assert.deepEqual(typesOf('Snömobil'), []);
-  assert.deepEqual(typesOf('Elcykel'), ['cyklar']);
+  assert.deepEqual(typesOf('Elcykel'), ['elcyklar']);
+  assert.deepEqual(typesOf('Damcykel'), ['cyklar']);
+  assert.deepEqual(typesOf('Elsparkcykel'), []);
+  assert.deepEqual(typesOf('El cykel'), ['elcyklar']);
+  assert.deepEqual(typesOf('Sparkcykel'), []);
+  assert.deepEqual(typesOf('Motionscykel'), []);
   assert.deepEqual(typesOf('T-shirts'), ['klader']);
   assert.deepEqual(typesOf('Kokbok'), ['bocker']);
   assert.deepEqual(typesOf('iPhone 12'), ['mobiler']);
@@ -139,4 +144,34 @@ test('a line with neither separator nor count in a separated file is shown', () 
 test('a text article number does not take the name column', () => {
   const res = parseList('Artikelnr;Sort;Antal\nA-1;Tröjor;5\n');
   assert.deepEqual(res.rows, [{ category: 'klader', count: 5 }]);
+});
+
+// From the persona test and the code review 2026-09-30.
+
+test('a till export names small appliances its own way', () => {
+  const res = parseList('Varugrupp;Antal\nSmåapparater kök;400\nTotalt;400\nLampor;80\n');
+  assert.deepEqual(res.rows, [{ category: 'kok', count: 400 }]);
+  const l = byName(res);
+  assert.equal(l.Totalt.reason, 'total');
+  assert.equal(l.Lampor.reason, 'unknown');
+});
+
+test('grouped thousands with a comma are a thousand, not one', () => {
+  assert.equal(parseAmount('1,000'), 1000);
+  assert.equal(parseAmount('12,500'), 12500);
+  assert.equal(parseAmount('12,5'), 12.5);      // a decimal is still a decimal, and still refused
+});
+
+test('Excel "Unicode text" (UTF-16 with a byte order mark) decodes', () => {
+  const text = 'Sort\tAntal\r\nTröjor\t300\r\n';
+  const le = new Uint8Array(2 + text.length * 2);
+  le[0] = 0xff; le[1] = 0xfe;
+  for (let i = 0; i < text.length; i++) { le[2 + i * 2] = text.charCodeAt(i) & 0xff; le[3 + i * 2] = text.charCodeAt(i) >> 8; }
+  assert.deepEqual(parseList(decodeList(le)).rows, [{ category: 'klader', count: 300 }]);
+});
+
+test('a total line is not counted, even when it names a product', () => {
+  const res = parseList('Tröjor;300\nByxor;200\nSumma kläder;500\nKläder totalt;500\n');
+  assert.deepEqual(res.rows, [{ category: 'klader', count: 500 }]);   // 300 + 200, not 1 500
+  assert.deepEqual(res.lines.filter((l) => l.reason === 'total').map((l) => l.name), ['Summa kläder', 'Kläder totalt']);
 });

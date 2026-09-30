@@ -22,12 +22,17 @@ const WORDS = {
   borr: ['=borr', 'slagborr', 'slagborrar', 'borrmaskin', 'borrmaskiner', 'skruvdragare', 'borrskruvdragare'],
   skidor: ['skida', 'skidor'],
   cyklar: ['cykel', 'cyklar'],
+  elcyklar: ['elcykel', 'elcyklar'],
   bocker: ['bok', 'böcker', 'pocket', 'pocketar'],
-  kok: ['köksapparat', 'köksapparater', 'mixer', 'mixrar', 'brödrost', 'brödrostar', 'vattenkokare', 'kaffebryggare', 'kaffemaskin', 'kaffemaskiner', 'elvisp', 'elvispar', 'våffeljärn', 'matberedare', 'juicepress'],
+  kok: ['köksapparat', 'köksapparater', 'småapparat', 'småapparater', 'hushållsapparat', 'hushållsapparater', 'köksmaskin', 'köksmaskiner', 'mixer', 'mixrar', 'brödrost', 'brödrostar', 'vattenkokare', 'kaffebryggare', 'kaffemaskin', 'kaffemaskiner', 'elvisp', 'elvispar', 'våffeljärn', 'matberedare', 'juicepress'],
 };
 
 // Real words that end like a product type but are something else.
-const NOT = new Set(['motorcykel', 'motorcyklar', 'disko', 'snömobil', 'snömobiler', 'lastpall', 'lastpallar']);
+const NOT = new Set(['motorcykel', 'motorcyklar', 'elsparkcykel', 'elsparkcyklar', 'sparkcykel', 'sparkcyklar', 'motionscykel', 'motionscyklar', 'disko', 'snömobil', 'snömobiler', 'lastpall', 'lastpallar']);
+
+// A line that adds up the others. Shown as such, so it is never mistaken for a
+// product type the tool lacks.
+const TOTAL = /^(summa|delsumma|totalsumma|slutsumma|totalt?|totals|sum|summering)$/;
 
 const HEAD_COUNT = /^(antal|antalsålda|sålda|st|styck|stycken|kvantitet|qty|quantity|count|antalst)$/;
 const HEAD_NAME = /(sort|kategori|produkt|artikel|namn|vara|varor|benämning|typ|beskrivning)/;
@@ -53,13 +58,17 @@ function typeOfWord(word) {
 
 /** Every product type a line's name mentions. */
 export function typesOf(name) {
-  return [...new Set(name.split(/[\s/&+]+/).map(typeOfWord).filter(Boolean))];
+  // "El cykel" written as two words is still an e-bike, not a bike.
+  const joined = name.replace(/(^|[\s/&+])el\s+(cykel|cyklar)/gi, '$1el$2');
+  return [...new Set(joined.split(/[\s/&+]+/).map(typeOfWord).filter(Boolean))];
 }
 
 /** A count as people write it: "1200", "1 200", "1.200", "300 st". Null if it is not one. */
 export function parseAmount(cell) {
   let s = String(cell).trim().replace(/[\s  ]/g, '').replace(/(st|st\.|stycken|pcs)$/i, '');
-  if (/^[1-9]\d{0,2}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, '');
+  // Grouped thousands, "1.200" or "1,200": a count is a whole number, and
+  // reading "1,000" as one would lose three zeros without a word.
+  if (/^[1-9]\d{0,2}([.,]\d{3})+$/.test(s)) s = s.replace(/[.,]/g, '');
   if (!/^\d+([.,]\d+)?$/.test(s)) return null;
   return Number(s.replace(',', '.'));
 }
@@ -98,6 +107,9 @@ function guessSeparator(lines) {
 
 /** Bytes from a file, as text. Excel on Windows still saves CSV as Windows-1252. */
 export function decodeList(bytes) {
+  // Excel's "Unicode text" is UTF-16 with a byte order mark.
+  if (bytes[0] === 0xff && bytes[1] === 0xfe) return new TextDecoder('utf-16le').decode(bytes.subarray(2));
+  if (bytes[0] === 0xfe && bytes[1] === 0xff) return new TextDecoder('utf-16be').decode(bytes.subarray(2));
   try {
     return new TextDecoder('utf-8', { fatal: true }).decode(bytes).replace(/^﻿/, '');
   } catch {
@@ -111,7 +123,7 @@ export function decodeList(bytes) {
  * @returns {{rows: {category: string, count: number}[], lines: {name: string, count: number|null, category: string|null, reason: string, types?: string[]}[]}}
  *   rows: one per product type, counts added up, in order of first appearance.
  *   lines: every line that was counted or needs the reader's attention.
- *   reason: 'ok' | 'unknown' | 'ambiguous' | 'nocount' | 'numbers' | 'decimal' | 'toomany'
+ *   reason: 'ok' | 'unknown' | 'total' | 'ambiguous' | 'nocount' | 'numbers' | 'decimal' | 'toomany'
  */
 export function parseList(text, maxCount = 1e8) {
   const raw = text.split(/\r\n|\r|\n/).map((l) => l.trim()).filter(Boolean);
@@ -162,6 +174,8 @@ export function parseList(text, maxCount = 1e8) {
     if (reason === 'ok' && !Number.isInteger(amount)) reason = 'decimal';
     const count = amount;
     if (reason === 'ok' && count === 0) continue; // none of them: nothing to count or to lose
+    // "Summa kläder" and "Kläder totalt" add up lines above; counting them would double the clothes.
+    if (reason === 'ok' && name.split(/[\s/&+:,.-]+/).some((w) => TOTAL.test(norm(w)))) reason = 'total';
     if (reason === 'ok' && types.length === 0) reason = 'unknown';
     if (reason === 'ok' && types.length > 1) reason = 'ambiguous';
 

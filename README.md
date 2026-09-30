@@ -17,10 +17,12 @@ Tests: `node --test tests/*.test.mjs`
 For each product type, a number of circulated items N and the emissions of one new item (a typical value per type; the low and high ends of the sources' span are shown beside the result, not used as the headline):
 
 - **Avoided**: N × new-item emissions × the share that replaces a new purchase (default 50%)
-- **Minus trips**: for the share that does *not* replace a new purchase, the car trips to and from the service, divided by the items per visit
-- **Minus operations**: the same share times the service's operating emissions per item
+- **Minus trips**: for the share that does *not* replace a new purchase, the car trips to and from the service, divided by the items per visit. For the share that does, only the trips beyond one shop visit (two one-way trips)
+- **Minus operations**: the non-replacing share times the service's operating emissions per item
 
-Trips and operations are only charged to the share that does not replace a new purchase, because a new purchase would have caused a shop trip too.
+A new purchase would have caused a shop visit and gone through a shop too, so the replacing share is not charged for those. This assumes the shop trip and the shop's emissions per item are the same size as the service's. Renting, borrowing and repair take four one-way trips, so the replacing share still pays for the two beyond a shop visit.
+
+New-item emissions run from raw material to the shop wherever the sources allow; the note on each factor says where they do not.
 
 Three methods: bought second hand (two one-way trips), rented or borrowed (four: fetch and return), and repaired (four: drop off and pick up). Renting and borrowing were one calculation under two names, so they are one method; old links with `hur=borrow` still open as rented or borrowed.
 
@@ -37,9 +39,13 @@ Decisions on how the tool calculates, kept so they can be reviewed or presented 
 - **2026-09-30, repair counts as a replacement share, 82 % for clothes and 50 % for the rest** (Henric).
   - Why 82 % for clothes: WRAP measured it in 2025 among 721 customers of clothing repair services, and IVL uses the same figure.
   - Why 50 % for the rest: nothing has been measured for other products. Half matches the second-hand default and the Restart Project's method.
-  - How long the repaired item lasts: covered by the share rather than asked as a separate question. The fullest published methods (Privett 2018, IVL 2025) build it into the share.
+  - How long the repaired item lasts: not asked as a separate question. WRAP's 82 % counts avoided purchases only and leaves the item's remaining life out; IVL uses the same share in a worked example and assumes the repaired item lasts as long as a new one. The page says so.
   - Rejected: 50 % for everything (more conservative, but ignores the only measurement there is), and a life-extension model (it needs the item's age and remaining life, which users do not know).
   - What it affects: the replacement share, a new cost for the repair itself (charged to all repaired items), and the method "lagats" in the sentence.
+- **2026-09-30, trips beyond one shop visit are charged to every loan and repair** (Demi, a correction after the method review).
+  - Why: the rule that the replacing share pays no trips rested on "a new purchase would have caused a shop trip too". That covers one visit, two one-way trips. A loan or a repair takes four, so two were never offset.
+  - What it affects: renting, borrowing and repair. 100 drill loans go from 984 to 895 kg net. Second hand is unchanged.
+  - Rejected for now: charging every trip and all operations to every circulation (WRAP's formula). It is the more common method in the literature, but it assumes the new purchase's shop trip is inside the new-item factor, which ADEME's production-to-shop values are not.
 - **2026-09-30, renting and borrowing are one method.** Both assumed four one-way trips, so they gave identical results under two names. Old `hur=borrow` links open as the merged method.
 - **2026-09-30, a replacement share of 50 % and a car factor of 0.17 kg per km** (Henric).
   - 50 %: Blocket's 2023 measurement. The 2025 figure, 40 %, is shown in the note.

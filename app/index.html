@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>CCC, Circular Consumption Calculator | Henric Barkman</title>
-  <meta name="description" content="Räkna ut hur mycket utsläpp second hand, uthyrning och utlåning undviker. Varje steg i uträkningen syns och går att ändra.">
+  <meta name="description" content="Räkna ut hur mycket utsläpp second hand, uthyrning, utlåning och lagning undviker. Varje steg i uträkningen syns och går att ändra.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,600;9..40,700&display=swap" rel="stylesheet">
@@ -32,21 +32,22 @@
     <section class="ask" aria-label="Vad vill du räkna på?">
       <h1 id="ask-h1" class="needs-calc">
         Hos oss har <span id="sentence-rows"></span><button type="button" class="slot-add" id="btn-add-row" aria-label="Lägg till en sorts produkt"><span aria-hidden="true">+</span>&#8201;fler</button>
-        <label class="visually-hidden" for="in-method">Hur</label><select class="slot" id="in-method"></select>.
+        <label class="visually-hidden" for="in-method">Hur produkterna har cirkulerat</label><select class="slot" id="in-method"></select>.
       </h1>
       <p class="load-error">Uträkningen kunde inte starta. Ladda om sidan.</p>
       <noscript><p class="load-error load-error--on">Uträkningen behöver JavaScript för att räkna.</p></noscript>
       <p class="ask-list needs-calc">Många sorter? <button type="button" class="linkbtn" id="btn-list">Läs in en lista</button> (Excel eller CSV med sort och antal per rad) eller <a href="#" id="dl-template" download="ccc-mall.csv">hämta en mall</a>.</p>
       <input type="file" id="in-list" accept=".xlsx,.xls,.ods,.csv,.tsv,.txt,text/csv,text/plain" hidden>
-      <div class="list-report" id="list-report" role="status" aria-live="polite" hidden></div>
+      <div role="status" aria-live="polite"><div class="list-report" id="list-report" hidden></div></div>
       <p class="ask-sub needs-calc">Vad betydde det för klimatet? Alla tal i uträkningen går att öppna, se källan till och byta mot era egna.</p>
     </section>
 
-    <aside class="result needs-calc" aria-live="polite" aria-atomic="true">
+    <aside class="result needs-calc" aria-label="Resultat">
       <div class="result-inner">
-        <div>
+        <div aria-live="polite" aria-atomic="true">
           <p class="result-figure" id="out-figure"></p>
           <p class="result-caption" id="out-caption">koldioxidekvivalenter som inte släpptes ut.</p>
+          <p class="result-help">Koldioxidekvivalenter är koldioxid och andra klimatgaser, räknade i samma mått.</p>
         </div>
         <div>
           <p class="result-note" id="out-note"></p>
@@ -90,14 +91,20 @@
 
     <section class="wrap method" aria-labelledby="method-h">
       <h2 id="method-h">Om metoden</h2>
-      <p>Uträkningen utgår från utsläppen när en ny produkt tillverkas och räknar hur mycket av det som slipper uppstå när någon köper begagnat, hyr, lånar eller lagar i stället. Sedan dras det bort som cirkuleringen själv orsakar: resor och drift, och för en lagning reservdelarna.</p>
-      <p>Mycket annat som räknar på cirkulär konsumtion utgår från att varje begagnat köp ersätter ett nytt, och att resorna till butiken inte finns. Det gör resultaten för stora. Här syns båda avdragen, och du ser hur mycket de betyder.</p>
+      <p>Uträkningen utgår från utsläppen för att tillverka en ny produkt och få den till butiken, och räknar hur mycket av det som slipper uppstå när någon köper begagnat, hyr, lånar eller lagar i stället. Sedan dras det bort som cirkuleringen orsakar utöver ett nyköp: resor, drift och, för en lagning, reservdelarna.</p>
+      <p>En del klimatsiffror för second hand räknar som om varje begagnat köp ersatte ett nytt och resorna inte fanns. Det gör resultaten för stora. Här syns båda avdragen, och du ser hur mycket de betyder.</p>
       <h3>Det här räknar verktyget inte med</h3>
       <ul>
-        <li>Pengar som sparas och läggs på annat. Den som köper en billig begagnad soffa kan resa för mellanskillnaden.</li>
-        <li>Att en begagnad eller lagad produkt kan ha kortare liv kvar än en ny. Andelen som ersätter ett nyköp fångar en del av det.</li>
-        <li>Tvätt, lagning och transporter av varor till butiken, till exempel när någon lämnar in kläder.</li>
-        <li>Vad som händer när produkten till slut slängs.</li>
+        <li>Pengar som sparas och läggs på annat. Den som köper en billig begagnad soffa kan resa för mellanskillnaden. För begagnade mobiler har det uppskattats äta upp ungefär 29 procent av nyttan (Makov och Font Vivanco 2018).</li>
+        <li>Att en begagnad eller lagad produkt kan ha kortare liv kvar än en ny. Mätningarna av andelen som ersätter ett nyköp frågar bara om köpet.</li>
+        <li>Användningen, som tvätt och el, eftersom den är ungefär densamma för en ny och en begagnad sak.</li>
+        <li>Resan när någon lämnar in saker till butiken.</li>
+        <li>Vad som händer när produkten till slut slängs. Det är litet: för en bärbar dator ungefär 3 av 193 kg under hela livet.</li>
+      </ul>
+      <h3>Det här räknas försiktigt</h3>
+      <ul>
+        <li>Alla resor räknas som om de gjordes bara för besöket. I Sverige åker ungefär hälften av dem som hämtar något begagnat just för det (Schibsted 2023).</li>
+        <li>En del av dem som inte hade köpt nytt hade köpt begagnat någon annanstans och åkt dit ändå.</li>
       </ul>
       <h3>Samma metod för avfall, vatten och kemikalier</h3>
       <p>Byt koldioxidekvivalenter mot kilo avfall, liter vatten eller kemikalier per ny produkt, så fungerar samma steg.</p>

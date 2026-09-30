@@ -51,6 +51,8 @@ test('rows are independent: one row alone gives the same as its share of many', 
 test('switching off trips and operations leaves only the avoided purchases', () => {
   const r = calculate({ ...shared, transportOn: false, opsOn: false, rows: [clothes] });
   close(r.transportKg, 0);
+  const loans = calculate({ ...shared, trips: 4, transportOn: false, rows: [clothes] });
+  close(loans.tripsFull + loans.tripsExtra, 0);   // no trip figures left over to display
   close(r.opsKg, 0);
   close(r.net, r.avoided);
 });
@@ -77,7 +79,9 @@ test('zero items per visit does not divide by zero', () => {
 });
 
 test('formatting never hides a small end or the value used', () => {
-  assert.equal(massRange(22, 11400), '0,022–11,4 ton');
+  assert.equal(massRange(22, 11400), '0,022–11 ton');
+  assert.equal(mass(81600), '82 ton');           // no decimal the sources cannot carry
+  assert.equal(mass(-0.2), '0 kg');              // never a minus zero
   assert.equal(massRange(740, 3700), '0,74–3,7 ton');
   assert.equal(massRange(4, 5000), '0,004–5 ton');
   assert.equal(massRange(120, 900), '120–900 kg');
@@ -124,9 +128,32 @@ test('repair: each row keeps its own share, and the repair itself is charged to 
   close(r.repairKg, 1200 * 0.1 + 100 * 3);  // 120 + 300 = 420, all items, not only the non-replacing
   close(r.perTripKg, 3.57);                 // 0.75 × 4 × 7 × 0.17
   close(r.visits, 216 / 2.5 + 50);          // 86.4 + 50 = 136.4
-  close(r.transportKg, 136.4 * 3.57);       // 486.948
+  close(r.replacingVisits, 984 / 2.5 + 50); // 393.6 + 50 = 443.6
+  close(r.perExtraKg, 1.785);               // the 2 trips beyond one shop visit: 0.75 × 2 × 7 × 0.17
+  close(r.transportKg, 136.4 * 3.57 + 443.6 * 1.785); // 486.948 + 791.826 = 1278.774
   close(r.opsKg, 266 * 0.25);               // (216 + 50) × 0.25 = 66.5
-  close(r.net, 11256 - 420 - 486.948 - 66.5);
+  close(r.net, 11256 - 420 - 1278.774 - 66.5);
+});
+
+// A new purchase offsets one shop visit, there and back. A loan takes four
+// one-way trips, so the loans that replace a purchase still pay for two.
+test('loans: trips beyond one shop visit are charged to the replacing share too', () => {
+  const drills = { count: 100, lca: 23.5, itemsPerTrip: 1 };
+  const r = calculate({ ...shared, trips: 4, rows: [drills] });
+  close(r.perTripKg, 3.57);                 // 0.75 × 4 × 7 × 0.17
+  close(r.extraTrips, 2);
+  close(r.tripsFull, 50 * 3.57);            // 178.5, the 50 loans that replace nothing
+  close(r.tripsExtra, 50 * 1.785);          // 89.25, the 50 that replace a purchase, 2 trips each
+  close(r.transportKg, 267.75);
+  close(r.net, 1175 - 267.75 - 12.5);       // 50 × 23.5 = 1175; ops 50 × 0.25
+});
+
+test('second hand takes no more trips than buying new, so nothing extra is charged', () => {
+  const r = calculate({ ...shared, rows: [clothes] });
+  close(r.extraTrips, 0);
+  close(r.tripsExtra, 0);
+  const own = calculate({ ...shared, newTrips: 0, rows: [clothes] });
+  close(own.tripsExtra, 600 / 2.5 * 1.785); // with no shop visit to offset, every item pays
 });
 
 test('rows without their own share or repair use the shared share and add nothing', () => {

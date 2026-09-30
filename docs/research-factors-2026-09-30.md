@@ -217,3 +217,25 @@ Transport-assumption cross-checks from the same sources (useful for defaults):
 ## Conclusion
 
 Clothing, shoes, furniture (chairs, sofas, tables), electronics and small kitchen appliances are well covered. ADEME Base Carbone gives item-level production values with uncertainty ranges and an open licence, and Swedish sources (Sandin/Mistra Future Fashion 2019, RISE 2017 furniture) confirm the orders of magnitude. The car factor is solid and Swedish: Naturvårdsverket's tool v9 gives 0.170 kg CO2e/vkm for petrol and 0.184 for diesel (well-to-wheel), and Trafikverket's 2025 inventory implies a fleet average of 0.138 (tank-to-wheel, biofuel and EVs counted as zero). The replacement rate is well evidenced and Swedish: Blocket 50% (2023) and 40% (2025), with category splits, which supports keeping 50% as the default and offering 40% as the newest measured value. The shaky parts are toys, tents, strollers, children's clothes and bookshelves (no citable item values), the operational-emissions term (one Swedish derived value, ≈0.25 kg per garment for Myrorna, plus UK online values of 0.5-1.4 kg per item), and smartphones, where the sources disagree by a factor of four. For a v1 factor table, the best single sources are ADEME Base Carbone (products), Naturvårdsverket's Klimatberäkningsverktyget v9 (car), Schibsted/Vend's Second-Hand Effect reports (r per category, Sweden) and the RISE Fritidsbanken report (a worked lending-service example with the same structure as this calculator).
+
+---
+
+## Corrections after the review, 2026-09-30
+
+Two factor reviews and a method review re-read every source. The values in `app/factors.js` changed as follows; each was checked against the source in the same session.
+
+- **System boundary.** New-item values now run from raw material to the shop wherever possible. Impact CO2's `footprint` field is that boundary; its `ecv` field adds use and end of life.
+- **Clothes span:** 5.2 (cotton T-shirt) to 23.2 kg (jeans), Impact CO2 `footprint`. A coat is 85.8. Mistra's 1-20 kg covers the whole life, laundry and the shop trip included (pp. 59-60, 70), so it is kept as a cross-check only. The typical 9 kg stays; its boundary is unknown.
+- **Phones:** typical 55 kg, IVL B 2372 (2020) p. 21, "Handheld: Smartphone", new production. Low 32.7 (Fairphone 5 production). High 79.3 (Impact CO2 `footprint`, ADEME and Arcep 2025).
+- **Laptops:** typical 182.3 (Impact CO2 `footprint`, 2025). Low 89, **derived**: Apple's 120 kg for the 13-inch M4 MacBook Air × 74 % (production 71 % + transport 3 %, Apple's split for the 15-inch model, PER carbon section). High 280, IVL B 2372 p. 21, notebook average.
+- **TV:** typical 328.3 (Impact CO2 `footprint`, 2025); Base Carbone 2018 gives 340-500 by screen size.
+- **Skis:** typical 29 kg, RISE 2020 p. 21 (adult slalom skis). The Base Carbone 15 kg was created in 2014, 80 % uncertainty, no source.
+- **Bikes** split in two. Plain bikes 96-150 kg (ECF 2011 p. 5, 5 g/km × 19,200 km, **derived**; Privett 2018 p. 52). E-bikes 134-261 kg (ECF p. 6, 7 g/km × 19,200 km, **derived**; Base Carbone 2019).
+- **Kitchen appliances:** typical 36.6 kg, the median of six appliances (31.9 and 41.3 either side).
+- **Tables:** high 80.2 kg, Base Carbone solid wood table. The RISE 120 kg was a desk plus a chair over its whole life.
+- **Chairs:** typical 24.8 kg, the upholstered wooden chair.
+- **Repair parts:** laptops 8 kg typical (battery), 0.2-60 (IVL B 2372 p. 21: battery 8, keyboard 3, adaptor 3, screen 60). TV 5.5 kg (Privett, power supply). Phone high 14 kg (IVL, phone screen).
+- **Shares and notes:** Blocket's 2025 average is 40 % (Vend, The Second-hand Effect Report 2025, p. 16); RISE calls its 50 % for Fritidsbanken a best case, per item in the lending stock. WRAP's 82 % for clothing repair is on p. 27 and leaves remaining life out; Privett measured 88 % across repair-café products.
+- **Rebound, for the page:** Makov and Font Vivanco 2018 (Frontiers in Energy Research 6:39) find 29 % on average for used smartphones, 27-46 % by model.
+
+Still open, waiting for Henric: books (Bokbranschens klimatinitiativ 2025 p. 21 gives 0.53 kg per average Swedish book, against 1.9 today), and whether a loan should count as half a new purchase when RISE counts per item in the lending stock.

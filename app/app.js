@@ -34,7 +34,7 @@ const FIELDS = {
 
 function opEfDefault() {
   if (isRepair()) return SHARED.opEfRepair;
-  return state.rows.every((r) => r.category === 'klader') ? SHARED.opEfPerItem : SHARED.opEfPerItemOther;
+  return counted().every((r) => r.category === 'klader') ? SHARED.opEfPerItem : SHARED.opEfPerItemOther;
 }
 
 const isRepair = () => state.method === 'repair';
@@ -83,8 +83,12 @@ function parseCount(raw) {
   return Number.isFinite(n) && n >= 1 && n <= MAX_COUNT ? n : null;
 }
 
+// A row added with "+ fler" has no count until someone types one, and until
+// then it is not part of the calculation.
+const counted = () => state.rows.filter((r) => r.count != null);
+
 function rowInputs(lcaOf = (row) => field(`lca:${row.category}`).value, repairOf = (row) => field(`repairKg:${row.category}`).value) {
-  return state.rows.map((row) => ({
+  return counted().map((row) => ({
     category: row.category,
     count: row.count,
     lca: lcaOf(row),
@@ -103,6 +107,7 @@ function inputs(lcaOf, repairOf) {
     transportOn: state.transportOn,
     carPct: field('carPct').value,
     trips: field('trips').value,
+    newTrips: SHARED.newPurchaseTrips.value,
     km: field('km').value,
     carEf: field('carEf').value,
     opsOn: state.opsOn,
@@ -162,13 +167,16 @@ function readUrl() {
   }
 }
 
+// Number to text without exponent: String(1e-8) is "1e-8", which readUrl refuses.
+const plain = (v) => (Number.isInteger(v) ? String(v) : v.toFixed(12).replace(/\.?0+$/, ''));
+
 function linkForState() {
-  const q = new URLSearchParams({ rader: state.rows.map((r) => `${r.category}.${r.count}`).join(','), hur: state.method });
+  const q = new URLSearchParams({ rader: counted().map((r) => `${r.category}.${r.count}`).join(','), hur: state.method });
   if (!state.transportOn) q.set('resor_med', '0');
   if (!state.opsOn) q.set('drift_med', '0');
   for (const [key, v] of Object.entries(state.overrides)) {
     const { name, catId } = spec(key);
-    q.set(catId ? `${ROW_URL[name]}.${catId}` : URL_KEYS[name], v);
+    q.set(catId ? `${ROW_URL[name]}.${catId}` : URL_KEYS[name], plain(v));
   }
   return `${location.origin}${location.pathname}?${q}`;
 }
@@ -201,13 +209,25 @@ function fillSentence() {
     const sep = i === 0 ? '' : i === n - 1 ? ' och ' : ', ';
     const c = catById[row.category];
     const remove = n > 1 ? `<button type="button" class="row-remove" data-remove="${i}" aria-label="Ta bort ${c.plural}">×</button>` : '';
-    return `${sep}<span class="row-slot"><input class="slot" type="number" inputmode="numeric" min="1" step="1" data-row="${i}" aria-label="Antal ${c.plural}" value="${row.count}"> <select class="slot" data-row="${i}" aria-label="Vilken sorts produkt">${optionsFor(i)}</select>${remove}</span>`;
+    const which = n > 1 ? `Sort ${i + 1} av ${n}` : 'Vilken sorts produkt';
+    return `${sep}<span class="row-slot"><input class="slot" type="number" inputmode="numeric" min="1" step="1" data-row="${i}" aria-label="Antal ${c.plural}" placeholder="antal" value="${row.count ?? ''}"> <select class="slot" data-row="${i}" aria-label="${which}">${optionsFor(i)}</select>${remove}</span>`;
   }).join('');
   inMethod.innerHTML = Object.values(METHODS).map((m) => `<option value="${m.id}">${m.label}</option>`).join('');
   inMethod.value = state.method;
   $('ask-h1').classList.toggle('is-list', n > 1);
   addBtn.hidden = n >= CATEGORIES.length;
+  updateRemovable();
   sizeSlots();
+}
+
+// The last row with a count cannot be removed while a blank row is left, so
+// there is always something to calculate. Typing a count changes that without
+// redrawing the sentence, so this runs on both.
+function updateRemovable() {
+  const many = counted().length > 1;
+  for (const b of sentence.querySelectorAll('[data-remove]')) {
+    b.hidden = !(state.rows[Number(b.dataset.remove)].count == null || many);
+  }
 }
 
 const measureCtx = document.createElement('canvas').getContext('2d');
@@ -220,7 +240,7 @@ function textWidth(el, text) {
 function sizeSlots() {
   for (const el of $('ask-h1').querySelectorAll('.slot')) {
     const em = parseFloat(getComputedStyle(el).fontSize);
-    if (el.tagName === 'INPUT') el.style.width = `${textWidth(el, String(el.value || '0')) + em * 0.2}px`;
+    if (el.tagName === 'INPUT') el.style.width = `${textWidth(el, String(el.value || el.placeholder || '0')) + em * 0.2}px`;
     else el.style.width = `${textWidth(el, el.options[el.selectedIndex]?.text ?? '') + em * 0.72}px`;
   }
 }
@@ -229,14 +249,14 @@ sentence.addEventListener('input', (e) => {
   const i = Number(e.target.dataset.row);
   if (e.target.tagName !== 'INPUT' || !state.rows[i]) return;
   const n = parseCount(e.target.value);
-  if (n) { state.rows[i].count = n; render(); }
+  if (n) { state.rows[i].count = n; updateRemovable(); render(); }
   sizeSlots();
 });
 sentence.addEventListener('change', (e) => {
   const i = Number(e.target.dataset.row);
   if (!state.rows[i]) return;
   // Leaving a blank or half-typed count shows the number the calculation uses.
-  if (e.target.tagName === 'INPUT') { e.target.value = state.rows[i].count; sizeSlots(); return; }
+  if (e.target.tagName === 'INPUT') { e.target.value = state.rows[i].count ?? ''; sizeSlots(); return; }
   if (e.target.tagName !== 'SELECT') return;
   state.rows[i].category = e.target.value;
   pruneOverrides(); fillSentence(); render();
@@ -253,7 +273,8 @@ addBtn.addEventListener('click', () => {
   const taken = new Set(state.rows.map((r) => r.category));
   const next = CATEGORIES.find((c) => !taken.has(c.id));
   if (!next) return;
-  state.rows.push({ category: next.id, count: 100 });
+  // No made-up count: the new row counts once someone types how many.
+  state.rows.push({ category: next.id, count: null });
   fillSentence(); render();
   sentence.querySelector(`select[data-row="${state.rows.length - 1}"]`)?.focus();
 });
@@ -261,6 +282,7 @@ addBtn.addEventListener('click', () => {
 
 const REASON = {
   unknown: 'Inte med: sorten finns inte i verktyget',
+  total: 'Inte med: ser ut som en summarad',
   nocount: 'Inte med: inget antal',
   numbers: 'Inte med: flera tal på raden. Ge kolumnen med antal rubriken Antal.',
   decimal: 'Inte med: antalet är inte ett heltal',
@@ -301,7 +323,10 @@ function loadSpreadsheetLib() {
   spreadsheetLib ??= new Promise((resolve, reject) => {
     const s = document.createElement('script');
     s.src = 'vendor/xlsx.full.min.js?v=dev';
-    s.onload = () => resolve(window.XLSX);
+    s.onload = () => {
+      if (window.XLSX) resolve(window.XLSX);
+      else { spreadsheetLib = null; reject(new Error('empty')); }
+    };
     s.onerror = () => { spreadsheetLib = null; reject(new Error('load')); };
     document.head.append(s);
   });
@@ -333,6 +358,7 @@ async function readListFile(file) {
   try {
     bytes = new Uint8Array(await file.arrayBuffer());
   } catch {
+    if (mine !== listRead) return;
     return listReport(`<p><b>${esc(file.name)}</b> gick inte att läsa. Försök igen, eller spara om filen.</p>`);
   }
   if (mine !== listRead) return;
@@ -340,9 +366,12 @@ async function readListFile(file) {
   let sheetNote = '';
   if (isZip(bytes) || isOle(bytes)) {
     let sheet;
+    // The reader is nearly a megabyte the first time; say so instead of looking dead.
+    if (!window.XLSX) listReport(`<p>Läser <b>${esc(file.name)}</b>…</p>`, false);
     try {
       sheet = await spreadsheetText(bytes);
     } catch {
+      if (mine !== listRead) return;
       return listReport(`<p><b>${esc(file.name)}</b> gick inte att läsa som kalkylark. Spara den som CSV och läs in den igen.</p>`);
     }
     if (mine !== listRead) return;
@@ -355,14 +384,22 @@ async function readListFile(file) {
   const { rows, lines } = parseList(text, MAX_COUNT);
   const left = lines.filter((l) => l.reason !== 'ok');
   if (!rows.length) {
-    return listReport(`<p>Ingen rad i <b>${esc(file.name)}</b>${sheetNote} gick att räkna, så meningen är oförändrad. Varje rad behöver en sort och ett antal, till exempel <i>Tröjor;300</i>.</p>${lineTable(lines)}`);
+    return listReport(`<p>Ingen rad i <b>${esc(file.name)}</b>${sheetNote} gick att räkna, så meningen är oförändrad. Varje rad behöver en sort och ett antal, till exempel <i>Tröjor;300</i>.</p>${unknownHint(lines)}${lineTable(lines)}`);
   }
   state.rows = rows;
   pruneOverrides(); fillSentence(); render();
   const total = rows.reduce((a, r) => a + r.count, 0).toLocaleString('sv-SE');
   const n = rows.length;
-  listReport(`<p>Från <b>${esc(file.name)}</b>${sheetNote}: ${total} produkter i ${n} ${n === 1 ? 'sort' : 'sorter'}, nu i meningen ovan.${left.length ? ` <b>${left.length} ${left.length === 1 ? 'rad räknas' : 'rader räknas'} inte med.</b>` : ''}</p>
+  listReport(`<p>Från <b>${esc(file.name)}</b>${sheetNote}: ${total} produkter i ${n} ${n === 1 ? 'sort' : 'sorter'}, som lades in i meningen ovan.${left.length ? ` <b>${left.length} ${left.length === 1 ? 'rad räknas' : 'rader räknas'} inte med.</b>` : ''}</p>${unknownHint(lines)}
     <details${left.length ? ' open' : ''}><summary>Så läste vi listan</summary>${lineTable(lines)}</details>`);
+}
+
+// Lines the tool did not recognise can still be counted by hand, as one of the
+// types it knows.
+function unknownHint(lines) {
+  if (!lines.some((l) => l.reason === 'unknown')) return '';
+  const names = CATEGORIES.map((c) => c.plural);
+  return `<p>Sorterna verktyget känner till är ${names.slice(0, -1).join(', ')} och ${names.at(-1)}. Passar en rad som inte kom med någon av dem, lägg till den med <i>+ fler</i> i meningen.</p>`;
 }
 
 function lineTable(all) {
@@ -381,16 +418,19 @@ function lineTable(all) {
   }</tbody></table></div>${more ? `<p>Och ${more.toLocaleString('sv-SE')} rader till.</p>` : ''}`;
 }
 
-function listReport(html) {
+function listReport(html, closable = true) {
   const box = $('list-report');
-  box.innerHTML = `${html}<button type="button" class="linkbtn list-close">Dölj</button>`;
+  box.innerHTML = `${html}${closable ? '<button type="button" class="linkbtn list-close">Dölj</button>' : ''}`;
   box.hidden = false;
-  box.querySelector('.list-close').addEventListener('click', () => { box.hidden = true; $('btn-list').focus(); });
+  box.querySelector('.list-close')?.addEventListener('click', () => { box.hidden = true; $('btn-list').focus(); });
 }
 
 inMethod.addEventListener('change', () => {
   state.method = inMethod.value;
+  // Both defaults depend on the method, so a number typed for one method does
+  // not follow into another unseen.
   delete state.overrides.trips;
+  delete state.overrides.opEf;
   sizeSlots(); render();
 });
 
@@ -410,8 +450,8 @@ function editor(key) {
   const { d, c } = spec(key);
   const hidden = openField === key ? '' : 'hidden';
   return `<div class="editor" id="editor-${key.replace(':', '-')}" data-editor="${key}" ${hidden}>
-    <label>${d.label(c)}</label>
-    <div class="editor-fields"><span>${d.unit}<input type="number" min="${d.min}" max="${d.max}" step="${d.step ?? 1}" value="${f.value}"></span></div>
+    <label for="in-${key.replace(':', '-')}">${d.label(c)}</label>
+    <div class="editor-fields"><span>${d.unit}<input id="in-${key.replace(':', '-')}" type="number" min="${d.min}" max="${d.max}" step="${d.step ?? 1}" value="${f.value}"></span></div>
     <p class="editor-msg" role="alert"></p>
     <p class="editor-source">${provenanceText(f)}</p>
     <div class="editor-actions">
@@ -450,7 +490,8 @@ function render() {
 // Words for "the things" in the sentence: the product's own plural when there
 // is one type, otherwise "produkter".
 function things(n) {
-  return state.rows.length === 1 ? catById[state.rows[0].category].plural : (n === 1 ? 'produkt' : 'produkter');
+  const rows = counted();
+  return rows.length === 1 ? catById[rows[0].category].plural : (n === 1 ? 'produkt' : 'produkter');
 }
 
 function renderResult(res) {
@@ -475,17 +516,21 @@ function renderResult(res) {
 // What the net rests on, in words: typical values, the user's own, or a mix,
 // and the span from the sources for the rows that still use them.
 function basisSentence(html) {
-  const own = state.rows.filter((r) => Object.hasOwn(state.overrides, `lca:${r.category}`));
+  const rows = counted();
+  if (!rows.length) return 'Skriv hur många i meningen ovan.';
+  const own = rows.filter((r) => Object.hasOwn(state.overrides, `lca:${r.category}`));
   const b = (t) => (html ? `<strong>${t}</strong>` : t);
-  if (own.length === state.rows.length) return 'Uträkningen bygger på era egna värden för utsläppen från nya produkter.';
+  if (own.length === rows.length) return 'Uträkningen bygger på era egna värden för utsläppen från nya produkter.';
   const span = spanOfResult();
-  const one = state.rows.length === 1 ? catById[state.rows[0].category] : null;
+  const one = rows.length === 1 ? catById[rows[0].category] : null;
+  // The span moves only what the sources disagree on: new products, and for a repair the repair itself.
+  const what = isRepair() ? 'för nya produkter och lagningar' : 'för nya produkter';
   if (!own.length) {
-    return `Uträkningen utgår från ${one ? `ett typiskt värde för ${one.singular}` : 'ett typiskt värde för varje sorts produkt'}. Med källornas lägsta och högsta värden blir nettot ${b(massRange(span.low, span.high))}. Vet ni mer om era produkter, ändra värdet i steg 1.`;
+    return `Uträkningen utgår från ${one ? `ett typiskt värde för ${one.singular}` : 'ett typiskt värde för varje sorts produkt'}. Med källornas lägsta och högsta värden ${what} blir nettot ${b(massRange(span.low, span.high))}. Vet ni mer om era produkter, ändra värdet i steg 1.`;
   }
   const list = own.map((r) => catById[r.category].plural);
   const named = list.length > 1 ? `${list.slice(0, -1).join(', ')} och ${list.at(-1)}` : list[0];
-  return `Uträkningen använder era egna värden för ${named} och typiska värden för resten. Med källornas lägsta och högsta värden för resten blir nettot ${b(massRange(span.low, span.high))}.`;
+  return `Uträkningen använder era egna värden för ${named} och typiska värden för resten. Med källornas lägsta och högsta värden ${what} för resten blir nettot ${b(massRange(span.low, span.high))}.`;
 }
 
 function pct(part, whole) {
@@ -552,6 +597,7 @@ function renderSteps(res) {
 
   const potentialLines = res.rows.map((r) => `<p class="equation">${r.count.toLocaleString('sv-SE')} ${catById[r.category].plural}${op('×')}${chip(`lca:${r.category}`)}${op('=')}${res$(mass(r.potential))}</p>`).join('');
   const visitTerms = res.rows.map((r) => `${num(r.notReplacing)} ${catById[r.category].plural}${op('÷')}${chip(`itemsPerTrip:${r.category}`)} per besök`).join(op('+'));
+  const replacingTerms = res.rows.map((r) => `${num(r.replacing)} ${catById[r.category].plural}${op('÷')}${num(r.itemsPerTrip)} per besök`).join(op('+'));
 
   const steps = [
     {
@@ -566,7 +612,7 @@ function renderSteps(res) {
       body: `${res.rows.map((r) => `<p class="equation">${chip(`share:${r.category}`)} av ${r.count.toLocaleString('sv-SE')} ${catById[r.category].plural}${op('×')}${num(r.lca)} kg${op('=')}${res$(mass(r.avoided))}</p>`).join('')}
         ${many ? `<p class="equation">Tillsammans ${res$(mass(res.avoided))} undvikna utsläpp</p>` : ''}
         <p>Räkna bara lagningar som blev klara. På reparationskaféer lyckas ungefär två av tre.</p>
-        <details class="why"><summary>Varför inte alla?</summary><p>En del trasiga saker hade fått ligga kvar, eller ersatts av något begagnat. En lagad sak håller inte heller alltid lika länge som en ny. För kläder finns en mätning: 82 procent av lagningarna ersatte ett nyköp. För annat finns ingen, så metoden räknar med hälften. Vet ni mer, ändra andelen.</p></details>`,
+        <details class="why"><summary>Varför inte alla?</summary><p>En del trasiga saker hade fått ligga kvar, eller ersatts av något begagnat. För kläder har WRAP frågat kunderna: 82 procent av lagningarna ersatte ett nyköp. För annat räknar metoden med hälften, som reparationskaféernas egna beräkningar gör. Mätningarna frågar om köpet, inte om hur länge den lagade saken håller, så en lagning som snart går sönder igen räknas som en hel. Vet ni mer, ändra andelen.</p></details>`,
       editors: res.rows.map((r) => `share:${r.category}`),
     } : {
       title: 'Men alla ersätter inte ett nyköp',
@@ -579,25 +625,28 @@ function renderSteps(res) {
       title: 'Själva lagningen',
       body: `${res.rows.map((r) => `<p class="equation">${r.count.toLocaleString('sv-SE')} ${catById[r.category].plural}${op('×')}${chip(`repairKg:${r.category}`)}${op('=')}${res$(mass(r.repair))}</p>`).join('')}
         ${many ? `<p class="equation">Tillsammans ${res$(mass(res.repairKg))}</p>` : ''}
-        <p>Reservdelar, tråd och verkstadens el. Räknas för varje lagning: när lagningen ersätter ett nyköp kostar delarna ändå något, och när den inte gör det tillkommer de helt.</p>`,
+        <p>Reservdelar och material. Räknas för varje lagning: ett nyköp hade inte behövt delarna, så de tillkommer oavsett. Verkstadens lokaler och el räknas i driften.</p>`,
       editors: res.rows.map((r) => `repairKg:${r.category}`),
     }] : []),
     {
       title: 'Resorna till och från',
       off: !state.transportOn,
       body: `<label class="switch"><input type="checkbox" data-toggle="transportOn" ${state.transportOn ? 'checked' : ''}> Räkna med resorna</label>
-        <p class="equation">${chip('carPct')} åker bil${op('×')}${chip('trips')}${op('×')}${chip('km')}${op('×')}${chip('carEf')}${op('=')}${num(res.perTripKg)} kg per besök</p>
-        <p class="equation">${visitTerms}${op('=')}${num(res.visits)} besök</p>
-        <p class="equation">${num(res.visits)} besök${op('×')}${num(res.perTripKg)} kg${op('=')}${res$(mass(res.transportKg))}</p>
-        <details class="why"><summary>Varför bara för dem som inte ersätter ett nyköp?</summary><p>Den som hade köpt nytt i stället hade också åkt till en butik. Resan tillkommer bara när köpet, hyran, lånet eller lagningen inte ersatte något. Flera saker som hämtas vid samma besök delar på resan.</p></details>`,
+        ${state.transportOn ? `<p class="equation">${chip('carPct')} åker bil${op('×')}${chip('trips')}${op('×')}${chip('km')}${op('×')}${chip('carEf')}${op('=')}${num(res.perTripKg)} kg per besök</p>
+        <p class="equation">${visitTerms}${op('=')}${num(res.visits)} besök som inte ersätter ett nyköp</p>
+        <p class="equation">${num(res.visits)} besök${op('×')}${num(res.perTripKg)} kg${op('=')}${res.extraTrips > 0 ? mass(res.tripsFull) : res$(mass(res.transportKg))}</p>
+        ${res.extraTrips > 0 ? `<p class="equation">${replacingTerms}${op('=')}${num(res.replacingVisits)} besök som ersätter ett nyköp</p>
+        <p class="equation">${num(res.replacingVisits)} besök${op('×')}${num(res.perExtraKg)} kg för ${num(res.extraTrips)} ${res.extraTrips === 1 ? 'resa' : 'resor'} utöver ett butiksbesök${op('=')}${mass(res.tripsExtra)}</p>
+        <p class="equation">Tillsammans ${res$(mass(res.transportKg))}</p>` : ''}` : '<p>Resorna räknas inte med.</p>'}
+        <details class="why"><summary>Varför räknas inte alla resor?</summary><p>Den som hade köpt nytt i stället hade också åkt till en butik, dit och hem. Den resan tillkommer inte, så den dras bara av för det som inte ersatte ett nyköp. Att hyra, låna eller lämna in något att laga kräver fler resor än ett köp. Resorna utöver ett butiksbesök räknas därför för allt. Metoden antar att resan till en butik för ett nyköp är lika lång som resan hit. Flera saker som hämtas vid samma besök delar på resan.</p></details>`,
       editors: ['carPct', 'trips', 'km', 'carEf', ...perKeys],
     },
     {
       title: isRepair() ? 'Driften av verkstaden' : 'Driften av butiken eller utlåningen',
       off: !state.opsOn,
       body: `<label class="switch"><input type="checkbox" data-toggle="opsOn" ${state.opsOn ? 'checked' : ''}> Räkna med driften</label>
-        <p class="equation">${num(res.notReplacing)} ${things(res.notReplacing)} som inte ersätter ett nyköp${op('×')}${chip('opEf')} per styck${op('=')}${res$(mass(res.opsKg))}</p>
-        <p>Lokal, värme och el. Samma resonemang som för resorna: bara den del som inte ersätter ett nyköp räknas som ett tillskott.</p>`,
+        ${state.opsOn ? `<p class="equation">${num(res.notReplacing)} ${things(res.notReplacing)} som inte ersätter ett nyköp${op('×')}${chip('opEf')} per styck${op('=')}${res$(mass(res.opsKg))}</p>` : '<p>Driften räknas inte med.</p>'}
+        <p>${isRepair() ? 'Verkstadens egna utsläpp: lokaler, energi och transporter.' : 'Butikens eller utlåningens egna utsläpp: insamling, transporter, lokaler och energi.'} Bara den del som inte ersätter ett nyköp räknas, eftersom ett nyköp också hade gått genom en butik. Metoden antar att den butiken släpper ut lika mycket per sak.</p>`,
       editors: ['opEf'],
     },
     {
@@ -607,8 +656,13 @@ function renderSteps(res) {
     },
   ];
 
-  const typing = document.activeElement?.closest?.('[data-editor]');
-  const typingInput = typing && document.activeElement;
+  // Only an input being typed in, in the editor that stays open, is kept. After
+  // Klar, Escape or Återställ focus is on a button or the editor is closing, and
+  // the fresh render must win, or the old number and the open box stay on screen.
+  const active = document.activeElement;
+  const typing = active?.tagName === 'INPUT' && active.closest?.('[data-editor]');
+  const keep = typing && typing.dataset.editor === openField ? typing : null;
+  const typingInput = keep && active;
   const caret = typingInput?.selectionStart ?? null;
 
   $('steps').innerHTML = steps.map((s) => `<li class="step${s.total ? ' step--total' : ''}${s.off ? ' is-off' : ''}">
@@ -618,12 +672,12 @@ function renderSteps(res) {
   // Put the editor being typed in back as it was, text and caret included, and
   // take only its source line and reset button from the fresh render. A number
   // input cannot hand back "1." as text, so rebuilding it would lose the dot.
-  if (typing) {
-    const fresh = document.querySelector(`[data-editor="${typing.dataset.editor}"]`);
+  if (keep) {
+    const fresh = document.querySelector(`[data-editor="${keep.dataset.editor}"]`);
     if (fresh) {
-      typing.querySelector('.editor-source').innerHTML = fresh.querySelector('.editor-source').innerHTML;
-      typing.querySelector('[data-reset]').disabled = fresh.querySelector('[data-reset]').disabled;
-      fresh.replaceWith(typing);
+      keep.querySelector('.editor-source').innerHTML = fresh.querySelector('.editor-source').innerHTML;
+      keep.querySelector('[data-reset]').disabled = fresh.querySelector('[data-reset]').disabled;
+      fresh.replaceWith(keep);
       typingInput.focus();
       try { if (caret != null) typingInput.setSelectionRange(caret, caret); } catch { /* number inputs have no selection API */ }
     }
@@ -631,11 +685,12 @@ function renderSteps(res) {
 }
 
 function renderTables() {
+  const inUse = counted();
   const keys = [
-    ...state.rows.map((r) => `lca:${r.category}`),
-    ...(isRepair() ? state.rows.flatMap((r) => [`share:${r.category}`, `repairKg:${r.category}`]) : ['replacementPct']),
+    ...inUse.map((r) => `lca:${r.category}`),
+    ...(isRepair() ? inUse.flatMap((r) => [`share:${r.category}`, `repairKg:${r.category}`]) : ['replacementPct']),
     'carPct', 'trips', 'km', 'carEf',
-    ...state.rows.map((r) => `itemsPerTrip:${r.category}`),
+    ...inUse.map((r) => `itemsPerTrip:${r.category}`),
     'opEf',
   ];
   const rows = keys.map((key) => {
@@ -659,9 +714,11 @@ function kindName(kind) {
 $('steps').addEventListener('click', (e) => {
   const chipEl = e.target.closest('.chip');
   if (chipEl) {
-    openField = openField === chipEl.dataset.field ? null : chipEl.dataset.field;
+    const key = chipEl.dataset.field;
+    openField = openField === key ? null : key;
     render();
-    document.querySelector(`[data-editor="${openField}"] input`)?.focus();
+    // Opening moves focus into the editor; closing puts it back on the chip.
+    document.querySelector(openField ? `[data-editor="${key}"] input` : `.chip[data-field="${key}"]`)?.focus();
     return;
   }
   const reset = e.target.closest('[data-reset]');
@@ -683,6 +740,7 @@ $('steps').addEventListener('change', (e) => {
   const t = e.target.closest('[data-toggle]');
   if (!t) return;
   state[t.dataset.toggle] = t.checked;
+  if (!t.checked) openField = null;
   render();
   document.querySelector(`[data-toggle="${t.dataset.toggle}"]`)?.focus();
 });
@@ -751,14 +809,18 @@ function plainText() {
   }
   if (state.transportOn) {
     L.push(`${n}. Resor: ${num(f('carPct'))} % med bil (${src('carPct')}), ${num(f('trips'))} enkelresor per besök (${src('trips')}), ${num(f('km'))} km (${src('km')}), ${num(f('carEf'))} kg per km (${src('carEf')}) = ${num(res.perTripKg)} kg per besök.`);
-    for (const r of res.rows) L.push(`   ${catById[r.category].plural}: ${num(r.itemsPerTrip)} per besök (${src(`itemsPerTrip:${r.category}`)}), ${num(r.visits)} besök`);
-    L.push(`   ${num(res.visits)} besök × ${num(res.perTripKg)} kg = ${mass(res.transportKg)}`);
+    for (const r of res.rows) L.push(`   ${catById[r.category].plural}: ${num(r.itemsPerTrip)} per besök (${src(`itemsPerTrip:${r.category}`)}), ${num(r.visits)} besök som inte ersätter ett nyköp`);
+    if (res.extraTrips > 0) {
+      L.push(`   ${num(res.visits)} besök × ${num(res.perTripKg)} kg = ${mass(res.tripsFull)}`);
+      L.push(`   ${num(res.replacingVisits)} besök som ersätter ett nyköp × ${num(res.perExtraKg)} kg för ${num(res.extraTrips)} ${res.extraTrips === 1 ? 'resa' : 'resor'} utöver ett butiksbesök = ${mass(res.tripsExtra)}`);
+      L.push(`   Tillsammans ${mass(res.transportKg)}`);
+    } else L.push(`   ${num(res.visits)} besök × ${num(res.perTripKg)} kg = ${mass(res.transportKg)}`);
   } else L.push(`${n}. Resor: inte medräknade.`);
   n++;
   if (state.opsOn) L.push(`${n}. Drift: ${num(f('opEf'))} kg per styck (${src('opEf')}). Avdrag: ${mass(res.opsKg)}`);
   else L.push(`${n}. Drift: inte medräknad.`);
   L.push('');
-  L.push(`Resor och drift räknas bara för den del som inte ersätter ett nyköp.${isRepair() ? ' Själva lagningen räknas för varje lagning.' : ''}`);
+  L.push(`Resor och drift räknas för den del som inte ersätter ett nyköp${res.extraTrips > 0 && state.transportOn ? ', och resorna utöver ett butiksbesök även för resten' : ''}.${isRepair() ? ' Själva lagningen räknas för varje lagning.' : ''}`);
   L.push(`Uträkningen: ${linkForState()}`);
   return L.join('\n');
 }
