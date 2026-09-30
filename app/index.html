@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="sv">
+<html lang="sv" class="is-pending">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,8 +7,18 @@
   <meta name="description" content="Räkna ut hur mycket utsläpp second hand, uthyrning och utlåning undviker. Varje steg i uträkningen syns och går att ändra.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,600;9..40,700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,600;9..40,700&display=swap" rel="stylesheet">
+  <!-- ?v=3 escapes copies browsers cached for four hours before _headers existed.
+       It never needs bumping: _headers makes every visit ask whether a file changed. -->
+  <link rel="stylesheet" href="styles.css?v=3">
+  <script>
+    // Nothing that depends on the calculation shows until there is one. If the
+    // script fails before that, say so instead of leaving empty headings.
+    addEventListener('error', function () {
+      var c = document.documentElement.classList;
+      if (c.contains('is-pending')) c.add('is-broken');
+    });
+  </script>
 </head>
 <body>
   <div class="wrap topline">
@@ -19,15 +29,19 @@
   <main>
     <div class="wrap workspace">
     <section class="ask" aria-label="Vad vill du räkna på?">
-      <h1 id="ask-h1">
-        Hos oss har <span id="sentence-rows"></span>
+      <h1 id="ask-h1" class="needs-calc">
+        Hos oss har <span id="sentence-rows"></span><button type="button" class="slot-add" id="btn-add-row" aria-label="Lägg till en sorts produkt"><span aria-hidden="true">+</span>&#8201;fler</button>
         <label class="visually-hidden" for="in-method">Hur</label><select class="slot" id="in-method"></select>.
       </h1>
-      <button type="button" class="add-row" id="btn-add-row">Lägg till en sorts produkt</button>
-      <p class="ask-sub">Vad betydde det för klimatet? Alla tal i uträkningen går att öppna, se källan till och byta mot era egna.</p>
+      <p class="load-error">Uträkningen kunde inte starta. Ladda om sidan.</p>
+      <noscript><p class="load-error load-error--on">Uträkningen behöver JavaScript för att räkna.</p></noscript>
+      <p class="ask-list needs-calc">Många sorter? <button type="button" class="linkbtn" id="btn-list">Läs in en lista</button> (CSV med sort och antal per rad) eller <a href="#" id="dl-template" download="ccc-mall.csv">hämta en mall</a>.</p>
+      <input type="file" id="in-list" accept=".csv,.tsv,.txt,text/csv,text/plain" hidden>
+      <div class="list-report" id="list-report" role="status" aria-live="polite" hidden></div>
+      <p class="ask-sub needs-calc">Vad betydde det för klimatet? Alla tal i uträkningen går att öppna, se källan till och byta mot era egna.</p>
     </section>
 
-    <aside class="result" aria-live="polite" aria-atomic="true">
+    <aside class="result needs-calc" aria-live="polite" aria-atomic="true">
       <div class="result-inner">
         <div>
           <p class="result-figure" id="out-figure"></p>
@@ -44,14 +58,14 @@
       </div>
     </aside>
 
-    <section class="flow" aria-labelledby="flow-h">
+    <section class="flow needs-calc" aria-labelledby="flow-h">
       <h2 id="flow-h">Från största möjliga nytta till netto</h2>
       <p class="flow-intro" id="flow-intro"></p>
       <ul class="legend" id="legend"></ul>
       <div class="bars" id="bars"></div>
     </section>
 
-    <section class="steps" aria-labelledby="steps-h">
+    <section class="steps needs-calc" aria-labelledby="steps-h">
       <div class="steps-head">
         <h2 id="steps-h">Så räknade vi</h2>
         <ul class="provenance" aria-label="Vad märkena betyder">
@@ -64,7 +78,7 @@
     </section>
     </div>
 
-    <section class="wrap sources" aria-labelledby="src-h">
+    <section class="wrap sources needs-calc" aria-labelledby="src-h">
       <h2 id="src-h">Källor och antaganden</h2>
       <p class="lead">Varje tal i uträkningen ovan, och var det kommer ifrån.</p>
       <div class="table-scroll"><table id="src-table"></table></div>
@@ -102,6 +116,6 @@
   <div class="tooltip" id="tooltip" role="presentation"></div>
   <div class="toast" id="toast" role="status"></div>
 
-  <script type="module" src="app.js"></script>
+  <script type="module" src="app.js?v=3" onerror="document.documentElement.classList.add('is-broken')"></script>
 </body>
 </html>

@@ -1,7 +1,11 @@
-import { CATEGORIES, METHODS, SHARED } from './factors.js';
-import { calculate, num, mass, massRange } from './calc.js';
+// ?v=3: see the note in index.html. Only this file imports the modules, so each
+// still loads once.
+import { CATEGORIES, METHODS, SHARED } from './factors.js?v=3';
+import { calculate, num, mass, massRange } from './calc.js?v=3';
+import { parseList, decodeList, templateCsv } from './list.js?v=3';
 
 const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
 const catById = Object.fromEntries(CATEGORIES.map((c) => [c.id, c]));
 const cap = (s) => s[0].toUpperCase() + s.slice(1);
 
@@ -231,6 +235,76 @@ addBtn.addEventListener('click', () => {
   fillSentence(); render();
   sentence.querySelector(`select[data-row="${state.rows.length - 1}"]`)?.focus();
 });
+// ---------- A list instead of the sentence ----------
+
+const REASON = {
+  unknown: 'Inte med: sorten finns inte i verktyget',
+  nocount: 'Inte med: inget antal',
+  numbers: 'Inte med: flera tal på raden. Ge kolumnen med antal rubriken Antal.',
+  toomany: `Inte med: fler än ${MAX_COUNT.toLocaleString('sv-SE')} av samma sort`,
+};
+
+$('dl-template').href = URL.createObjectURL(new Blob([templateCsv(CATEGORIES)], { type: 'text/csv;charset=utf-8' }));
+$('btn-list').addEventListener('click', () => $('in-list').click());
+$('in-list').addEventListener('change', (e) => {
+  const file = e.target.files?.[0];
+  e.target.value = ''; // the same file again should load again
+  if (file) readListFile(file);
+});
+
+const ask = document.querySelector('.ask');
+ask.addEventListener('dragover', (e) => {
+  if (![...(e.dataTransfer?.types ?? [])].includes('Files')) return;
+  e.preventDefault();
+  ask.classList.add('is-dropping');
+});
+ask.addEventListener('dragleave', (e) => { if (!ask.contains(e.relatedTarget)) ask.classList.remove('is-dropping'); });
+ask.addEventListener('drop', (e) => {
+  ask.classList.remove('is-dropping');
+  const file = e.dataTransfer?.files?.[0];
+  if (!file) return;
+  e.preventDefault();
+  readListFile(file);
+});
+
+async function readListFile(file) {
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  // An .xlsx is a zip archive; its bytes start with "PK".
+  if (bytes[0] === 0x50 && bytes[1] === 0x4b) {
+    return listReport(`<p><b>${esc(file.name)}</b> är en Excel-fil. Spara den som CSV i Excel (Arkiv, Spara som, CSV UTF-8) och läs in den igen.</p>`);
+  }
+  const { rows, lines } = parseList(decodeList(bytes), MAX_COUNT);
+  const left = lines.filter((l) => l.reason !== 'ok');
+  if (!rows.length) {
+    return listReport(`<p>Ingen rad i <b>${esc(file.name)}</b> gick att räkna, så meningen är oförändrad. Varje rad behöver en sort och ett antal, till exempel <i>Tröjor;300</i>.</p>${lineTable(lines)}`);
+  }
+  state.rows = rows;
+  pruneOverrides(); fillSentence(); render();
+  const total = rows.reduce((a, r) => a + r.count, 0).toLocaleString('sv-SE');
+  const n = rows.length;
+  listReport(`<p>Från <b>${esc(file.name)}</b>: ${total} produkter i ${n} ${n === 1 ? 'sort' : 'sorter'}, nu i meningen ovan.${left.length ? ` <b>${left.length} ${left.length === 1 ? 'rad räknas' : 'rader räknas'} inte med.</b>` : ''}</p>
+    <details${left.length ? ' open' : ''}><summary>Så läste vi listan</summary>${lineTable(lines)}</details>`);
+}
+
+function lineTable(lines) {
+  if (!lines.length) return '';
+  const what = (l) => {
+    if (l.reason === 'ok') return esc(catById[l.category].plural);
+    if (l.reason === 'ambiguous') return `Inte med: passar både ${l.types.map((t) => esc(catById[t].plural)).join(' och ')}. Dela upp raden.`;
+    return REASON[l.reason];
+  };
+  return `<div class="table-scroll"><table class="list-lines"><thead><tr><th>Rad i listan</th><th>Antal</th><th>Räknas som</th></tr></thead><tbody>${
+    lines.map((l) => `<tr${l.reason === 'ok' ? '' : ' class="is-left"'}><td>${esc(l.name)}</td><td class="num">${l.count == null ? '' : l.count.toLocaleString('sv-SE')}</td><td>${what(l)}</td></tr>`).join('')
+  }</tbody></table></div>`;
+}
+
+function listReport(html) {
+  const box = $('list-report');
+  box.innerHTML = `${html}<button type="button" class="linkbtn list-close">Dölj</button>`;
+  box.hidden = false;
+  box.querySelector('.list-close').addEventListener('click', () => { box.hidden = true; $('btn-list').focus(); });
+}
+
 inMethod.addEventListener('change', () => {
   state.method = inMethod.value;
   delete state.overrides.trips;
@@ -599,9 +673,16 @@ new IntersectionObserver(([entry]) => {
   sticky.classList.toggle('is-on', past);
 }).observe(document.querySelector('.result'));
 
-readUrl();
-fillSentence();
-render();
+try {
+  readUrl();
+  fillSentence();
+  // Shown before the first render, so the chart can measure its own width.
+  document.documentElement.classList.remove('is-pending');
+  render();
+} catch (err) {
+  document.documentElement.classList.add('is-pending', 'is-broken');
+  throw err;
+}
 document.fonts?.ready.then(sizeSlots);
 let resizeTimer;
 addEventListener('resize', () => {
