@@ -42,13 +42,13 @@ Open-source tool that calculates climate-impact savings from circulating product
 
 ## Deploy
 
-Static, no build. From a neutral cwd (so wrangler does not autogenerate `wrangler.jsonc` in the repo):
+Static, no build. Always through the script:
 
 ```
-cd /tmp && set -a && . /home/henric/generalassistant/.env && set +a && \
-CLOUDFLARE_API_TOKEN="$CLOUDFLARE_PAGES_TOKEN" npx wrangler pages deploy \
-  /home/henric/generalassistant/projects/aik-circular-consumption-calculator/app --project-name ccc --branch main
+/home/henric/generalassistant/projects/aik-circular-consumption-calculator/bin/deploy.sh
 ```
+
+It copies `app/` to a temp dir, replaces every `?v=dev` with a fingerprint of the files, refuses to deploy if any local script, stylesheet or import is unstamped, and runs `wrangler pages deploy` from `/tmp` (so wrangler does not autogenerate `wrangler.jsonc` in the repo). Why: the henricbarkman.se zone's Browser Cache TTL keeps `.js`/`.css` in browsers for four hours whatever `app/_headers` says, while HTML is always fresh. A plain deploy therefore ran new HTML against old cached scripts, crashed, and showed empty headings (2026-09-30). New imports need `?v=dev` too; the script fails loudly if one is missing.
 
 Never pass `--force` again: it was needed once to create the project on classic Pages instead of letting wrangler 4.144 delegate to Workers (which the Pages token cannot do). Smoke test https://ccc.henricbarkman.se after every deploy.
 

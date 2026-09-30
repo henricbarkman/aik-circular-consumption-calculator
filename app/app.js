@@ -1,8 +1,8 @@
-// ?v=3: see the note in index.html. Only this file imports the modules, so each
-// still loads once.
-import { CATEGORIES, METHODS, SHARED } from './factors.js?v=3';
-import { calculate, num, mass, massRange } from './calc.js?v=3';
-import { parseList, decodeList, templateCsv } from './list.js?v=3';
+// ?v=dev: stamped at deploy, see the note in index.html. Only this file imports
+// the modules, so each still loads once.
+import { CATEGORIES, METHODS, SHARED } from './factors.js?v=dev';
+import { calculate, num, mass, massRange } from './calc.js?v=dev';
+import { parseList, decodeList, templateCsv } from './list.js?v=dev';
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));

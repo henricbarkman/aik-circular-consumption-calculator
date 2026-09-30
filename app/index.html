@@ -8,9 +8,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,600;9..40,700&display=swap" rel="stylesheet">
-  <!-- ?v=3 escapes copies browsers cached for four hours before _headers existed.
-       It never needs bumping: _headers makes every visit ask whether a file changed. -->
-  <link rel="stylesheet" href="styles.css?v=3">
+  <!-- ?v=dev is replaced by a fingerprint of the files when bin/deploy.sh publishes.
+       The henricbarkman.se zone keeps .js and .css in browsers for four hours
+       whatever _headers says, so a changed file must get a new address. -->
+  <link rel="stylesheet" href="styles.css?v=dev">
   <script>
     // Nothing that depends on the calculation shows until there is one. If the
     // script fails before that, say so instead of leaving empty headings.
@@ -116,6 +117,6 @@
   <div class="tooltip" id="tooltip" role="presentation"></div>
   <div class="toast" id="toast" role="status"></div>
 
-  <script type="module" src="app.js?v=3" onerror="document.documentElement.classList.add('is-broken')"></script>
+  <script type="module" src="app.js?v=dev" onerror="document.documentElement.classList.add('is-broken')"></script>
 </body>
 </html>
