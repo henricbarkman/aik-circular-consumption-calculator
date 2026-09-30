@@ -16,11 +16,12 @@ Tests: `node --test tests/*.test.mjs`
 
 For each product type, a number of circulated items N and the emissions of one new item (a typical value per type; the low and high ends of the sources' span are shown beside the result, not used as the headline):
 
-- **Avoided**: N × new-item emissions × the share that replaces a new purchase (default 50%)
-- **Minus trips**: for the share that does *not* replace a new purchase, the car trips to and from the service, divided by the items per visit. For the share that does, only the trips beyond one shop visit (two one-way trips)
-- **Minus operations**: the non-replacing share times the service's operating emissions per item
+- **Avoided purchases**: N × the share that replaces a new purchase (default 50%). For a loan, divided by L, the loans that together make one purchase: someone who owns the thing uses it many times, so a loan replaces 1/L of a purchase (skis 1/9, books 1/1). Second hand and repair replace whole purchases.
+- **Avoided**: avoided purchases × new-item emissions
+- **Minus trips**: every visit's car trips (N divided by the items per visit), minus one shop visit, there and back, for each avoided purchase
+- **Minus operations**: (N − avoided purchases) × the service's operating emissions per item
 
-A new purchase would have caused a shop visit and gone through a shop too, so the replacing share is not charged for those. This assumes the shop trip and the shop's emissions per item are the same size as the service's. Renting, borrowing and repair take four one-way trips, so the replacing share still pays for the two beyond a shop visit.
+A new purchase would have caused a shop visit and gone through a shop too, so those are subtracted for every avoided purchase. This assumes the shop trip and the shop's emissions per item are the same size as the service's. With whole purchases it is the same as charging the non-replacing share in full and the replacing share for the trips beyond one shop visit, which is how the page counted until the loan change.
 
 New-item emissions run from raw material to the shop wherever the sources allow; the note on each factor says where they do not.
 
@@ -36,6 +37,20 @@ All factors and their sources: [app/factors.js](app/factors.js) and [docs/resear
 
 Decisions on how the tool calculates, kept so they can be reviewed or presented later. Newest first.
 
+- **2026-09-30, a loan replaces 1/L of a new purchase** (Henric: "Varför inte tänka att ett lån ersätter 1 åttondels nyköp?").
+  - Why: someone who owns a pair of skis uses it 7.5 to 10 times (RISE 2020, p. 22). Counting each loan as a whole avoided purchase made loans look far better than they are.
+  - L per product type, with its source or reasoning in `app/factors.js`. Henric suggested about 1/6 for skis. The source gives 1/7.5 to 1/10, so the page uses 1/9 and he can change it.
+  - L comes on top of the 50 % share: the share asks whether the borrower would otherwise have owned one, L how much of a purchase one loan is. For skis, 1/18 of a purchase per loan. RISE's own best case is about 1/25.
+  - A loan is defined per product type where it varies: a month for clothes, two weeks for bikes, e-bikes and tools.
+  - Consequence: loans of durable things usually come out negative with the default trips, because a loan takes whole trips and saves a small part of a product. Every library-of-things method found credits a whole product per loan, so their results are 10 to 40 times higher than this page's.
+  - Trips and operations were rewritten to one form for all methods: every visit and every item is charged, and one shop visit and one shop's operations are subtracted per avoided purchase. For second hand and repair the numbers are unchanged.
+  - Rejected: counting loans per item in the lending (needs the number of loans per item, which a user rarely has), and a whole purchase per loan (the libraries-of-things convention).
+- **2026-09-30, books 0.56 kg, and a library's car share of 38 %** (Henric: "Ja", and "bibliotek ligger ofta i närheten så andelen bilresor är antagligen betydligt lägre").
+  - 0.56 kg: an average book from a Swedish publisher to the bookshop, Bokbranschens klimatinitiativ 2025, pp. 21 and 22. The report's own 534 g stops at the publisher; the 24 g to the bookshop is added to match the other factors. A book from a foreign publisher, 1.32 kg, is the top of the span.
+  - 38 %: Novus for Svensk biblioteksförening 2018, 35 % by car and 8 % don't know. Used when books are all that is borrowed, the same way Myrorna's operations figure is used when clothes are all that is counted.
+  - A list with books and other things gets a car share weighted by visits: 38 % for the book loans, 75 % for the rest. That equals giving each row its own share for the trips. Rejected: 38 % only when every row is books, because one garment in a list of a thousand books then moved every book loan to 75 % (found in review 2026-09-30).
+  - A bought book is read by one person (KTH 2009), so a library loan replaces a whole purchase (L = 1).
+  - Not counted: that a library buys its books new. A library book is lent about 18 times (KB 2024, derived), so each loan carries about 1/18 of a new book.
 - **2026-09-30, repair counts as a replacement share, 82 % for clothes and 50 % for the rest** (Henric).
   - Why 82 % for clothes: WRAP measured it in 2025 among 721 customers of clothing repair services, and IVL uses the same figure.
   - Why 50 % for the rest: nothing has been measured for other products. Half matches the second-hand default and the Restart Project's method.

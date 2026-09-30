@@ -238,4 +238,62 @@ Two factor reviews and a method review re-read every source. The values in `app/
 - **Shares and notes:** Blocket's 2025 average is 40 % (Vend, The Second-hand Effect Report 2025, p. 16); RISE calls its 50 % for Fritidsbanken a best case, per item in the lending stock. WRAP's 82 % for clothing repair is on p. 27 and leaves remaining life out; Privett measured 88 % across repair-café products.
 - **Rebound, for the page:** Makov and Font Vivanco 2018 (Frontiers in Energy Research 6:39) find 29 % on average for used smartphones, 27-46 % by model.
 
-Still open, waiting for Henric: books (Bokbranschens klimatinitiativ 2025 p. 21 gives 0.53 kg per average Swedish book, against 1.9 today), and whether a loan should count as half a new purchase when RISE counts per item in the lending stock.
+Both questions that were open here were settled by Henric the same evening; see the next section.
+
+---
+
+## 6. Loans: how much of a purchase one loan replaces (2026-09-30)
+
+Henric's decision: a loan replaces 1/L of a new purchase, where L is how many loans equal one purchase. The owner of an item uses it many times; one loan is one use period. The replacement share (50 %) still applies on top, so a pair of skis counts 0.5 × 1/9 = 1/18 of a new pair per loan. RISE's own best case is about 1/25 (r = 0.5, lifetime +50 %, per item in the lending stock).
+
+L per category, as written into `app/factors.js`. Every number was read in the source in this session.
+
+| Category | L (low-high) | What one loan is | Basis | Source |
+|---|---|---|---|---|
+| Clothes | 8 (5-24) | One month | Rental: dress 4 uses, T-shirt 6, jeans 10, jacket 15 per month (IVL B2497, 2025, Table 3, p. 16). Owned in Sweden: dress 26, T-shirt 30, jacket 140, jeans 240 uses (Mistra Future Fashion 2019, Table 3.6, p. 55). | https://ivl.diva-portal.org/smash/get/diva2:1926690/FULLTEXT01.pdf ; Mistra (Sandin et al. 2019) |
+| Shoes | 10 | Specialty shoes (ski boots, bowling, party) | **Assumption**: close to RISE skis. Everyday shoes are worn about 100 days per pair under the EU footwear PEFCR (2025). | PEFCR apparel and footwear v3.1 |
+| Chairs | 10 (3-15) | 12-month rental | Office chair discarded after about 10 years, 15 in the public sector (pp. 11-12). A 3-year rental gives about 1/3. Event rentals of a day: the user must change it. | RISE, *Hållbarhetsanalys av cirkulära möbelflöden*, 2017, diva2:1171159 |
+| Sofas | 9 (5-15) | 12-month rental | 8.6 years before being put away, passed on or discarded (Austrian survey, Wieser et al., PLATE 2015, p. 389). RISE example 5 years (p. 5); other studies 15. | Wieser et al. 2015 (vbn.aau.dk proceedings); RISE 2017 |
+| Tables | 9 (7-15) | 12-month rental | Desk 8.8 years (Wieser p. 389); RISE about 7 years for office furniture (p. 13). No source measures dining tables. | same |
+| Phones | 1.5 (1-3) | 2-year rental with a subscription | Phone used about 3 years (EEB *Coolproducts don't cost the earth*, 2019, p. 18; Apple assumes the same). Samsung Flex rents phones on 24 months. | EEB 2019; https://news.samsung.com/se/nu-lanseras-samsung-flex |
+| Laptops | 4.5 (1.5-5) | 12-month rental | 4.5 years (EEB p. 14), 5.1 years (UBA 2016, p. 123). Businesses often lease for 3 years, giving 1/1.5. | EEB 2019; UBA Texte 11/2016 |
+| TV | 7 (2-8) | 12-month rental | 7.3 years (Wieser p. 389), 5.6 (UBA p. 25), 8 (ADEME). | same |
+| Drills | 20 (5-100) | 5-20 uses | Owned drill used 20 times a year for 5 years = 100 uses; a renter uses it 5-20 times (pp. 5-7). The "13 minutes in its lifetime" claim has no traceable source. | Martin, Lazarevic, Gullström, *Sustainability* 11(1):190, 2019, https://doi.org/10.3390/su11010190 |
+| Skis | 9 (7.5-10) | One loan | Owned slalom skis last 5 years and are used 1.5-2 times a year, from surveys of RISE and IVL staff (p. 22). Henric suggested about 1/6; the source gives 1/7.5 to 1/10. | RISE 2020 (Fritidsbanken) |
+| Bikes | 60 (50-340) | Two weeks, about 8 cycling days | **Derived**: about 2 billion km cycled a year at 7 km per cyclist-day (Naturvårdsverket report 6894, 2019, p. 24) and about 590,000 bikes sold a year (Svensk Cykling via Miljöbarometern) give about 490 days per bike. ECF's 2,400 km a year for 8 years gives about 2,700 days, so 340. | NV 6894; ECF 2011 |
+| E-bikes | 120 (90-210) | Two weeks, about 125 km | Life 15,000-19,200 km, about 2,400 km a year. **Caveat**: in Göteborg's trial-loan programme 7-25 % of borrowers had bought an e-bike eight months later, so a trial loan can cause a purchase rather than replace one. The tool cannot show that. | ECF 2011; Leeds 2022 (eprints.whiterose.ac.uk/id/eprint/184093); Göteborgs stad, *Elcyklist, uppföljning av samtliga omgångar*, 2024 |
+| Books | 1 (1-3) | One loan | A bought book is read by about one person on average, since some bought books are never read (KTH 2009, pp. 8 and 18). Two or three readers give 1/2 to 1/3 (Kozak, Michigan CSS03-04, 2003, p. 98). | https://www.diva-portal.org/smash/get/diva2:355954/FULLTEXT01.pdf ; https://css.umich.edu/sites/default/files/css_doc/CSS03-04.pdf |
+| Kitchen appliances | 20 | One loan | **Assumption**: rarely used appliances (waffle iron, raclette), about 2 uses a year for a 9-year life (EEA). | EEA |
+
+**Books, new-item value 0.56 kg (0.56-1.32).** Bokbranschens klimatinitiativ, *Bokbranschens klimatpåverkan 2024* (2025), pp. 21-22: 411 g production + 123 g publisher = 534 g, plus 24 g distribution to the shop; a book printed abroad is 1.32 kg. https://forlaggare.se/wp-content/uploads/2025/10/BBKI-Bokbranschens-klimatinitiativ-Rapport.pdf
+
+**Library car share 38 %.** Novus for Svensk biblioteksförening, 2018, pp. 8-9: 35 % go by car, 33 % walk, 11 % cycle, 11 % public transport, 8 % don't know, so 38 % of those who answered. Six in ten live within 3 km of their library; in smaller towns and rural areas 51 % drive. Used as the default when the method is renting/lending and every counted row is books. https://biblioteksforeningen.se/wp-content/uploads/2018/05/novus-rapport-svensk-biblioteksforening-final.pdf
+
+**A library buys new books.** Kungliga biblioteket, *Bibliotek 2024*: public libraries bought 1,759,924 printed books (Table 16, p. 33) and made 31,290,726 initial loans of printed books (Table 20, p. 38), about 18 initial loans per book bought (28 with renewals). Each loan thus carries about 1/18 of a new book. Not counted in the tool; stated on the page.
+
+**What the result looks like with the defaults** (75 % car, 7 km, 4 one-way trips per visit, 0.25 kg operations per item). Net per loan: phones +15, laptops +17, TV +20, sofas +7 kg; clothes −1.1, shoes −2.9, chairs −0.7, tables −0.4, drills −3.2, skis −2.1, bikes −2.8, e-bikes −3.0, kitchen −2.9, books (38 % car) −0.3 kg. Short loans pay for a whole round trip but save a fraction of a purchase. The page shows the car share at which the result turns positive (skis about 29 %, books about 13 %). Two sources confirm the pattern: RISE 2020 section 3.5.1.3 (car trips cut Fritidsbanken's saving from over 70 % to 30 %, even with half of each trip allocated) and Zamani, Sandin and Peters, "Life cycle assessment of clothing libraries", *J. Cleaner Production* 162:1368-1375, 2017, doi 10.1016/j.jclepro.2017.06.128 (customer travel by car can cancel a clothing library's benefit).
+
+**How others count a loan.**
+- Libraries of things mostly credit one whole new item per loan ("the act of lending an item has the direct impact of avoiding carbon emissions that would have been generated had the user chosen to purchase that item new", Benthyg Cymru research report, 2022, p. 7). Against CCC's 0.5/L that is 2L times higher: about 18 times for skis, 40 for drills.
+- IVL C371, *Delningens potential* (2019), p. 60, assumes 20 % of tool rentals avoid buying a tool, a whole tool each, so 1/5 of a purchase per rental. CCC's drill is 0.5 × 1/20 = 1/40, eight times lower. IVL calls its own calculation "mycket förenklade".
+
+Rejected: counting per item in the lending stock (RISE's convention; a lending service knows its loans, rarely use per item), and one whole purchase per loan (the library-of-things convention; it ignores that an owner uses the item many times).
+
+### 6a. Fritidsbanken's own sources (read 2026-09-30, files in `/tmp/ccc-rent/fb/`)
+
+**Replacement share, measured.** Lower than the 50 % default.
+- 25 % would have bought the equipment; 48 % would have skipped the activity, 21 % borrowed from someone else, 6 % other. Högman, Karlstads universitet, "Fritidsbankens betydelse för barns och ungas idrott och fritid", slides 2023-04-24, slide 14; n = 427 borrowers aged 7-25, 1 June-15 September 2022, 52 banks (slide 3). Summer only: winter gear was 1 % of loans (CIF, *På lånad tid*, 2023, p. 60, n = 394). https://www.fritidsbanken.se/wp-content/uploads/2023/04/Presentation-fritidsbanker-24-april-2023.pdf ; https://centrumforidrottsforskning.se/wp-content/uploads/2026/03/Pa-lanad-tid-%E2%80%93-Fritidsbankens-betydelse-for-barn-och-ungas-fritid_0.pdf
+- 30 % answered "köpt" to "Om inte Fritidsbanken hade funnits, hur hade du gjort för att få tillgång till utrustningen?" (RISE 2020, p. 22; no n for the question, the user surveys had 113 digital and 80 paper answers, p. 8). Same page: 72 % had considered buying but borrowed instead.
+- Neither asks whether the purchase would have been new.
+- RISE's 0.5 is an assumption, per item in the stock, which RISE calls the best case (Table 5, p. 21; sensitivity 0.25 and 0.75, p. 22). Martin et al. 2019 use 50 % (high) and 25 % (low) of rentals (Table 6, p. 7). Vestblad 2016 counts every loan as one avoided new item (p. 9).
+- Later purchases: 20 % bought equivalent new equipment after borrowing (RISE p. 22), 24 % second hand (p. 23). Umeå: 24 of 264 respondents (9 %) had bought similar equipment after borrowing (Bromark and Sjölund 2019, p. 51, https://www.diva-portal.org/smash/get/diva2:1333208/FULLTEXT01.pdf).
+
+**Loans per item.** Loan period 14 days (RISE p. 17). Skis are lent 1.7 times a year (RISE Table 5, p. 21, from Vestblad). Deje register January 2013-December 2015: slalom skis 407 loans on 118 usable pairs, 3.45 per pair; cross-country skis 2.43; skates 2.02 (Vestblad, Karlstads universitet 2016, Table 1, p. 9, https://kau.diva-portal.org/smash/get/diva2:940899/FULLTEXT01.pdf). Owned skis are used 1.5-2 times a year, so one loan is about one use of an owned pair: **supports L = 9 for skis.** Expressed per loan, RISE's model credits about 0.06 of a new pair; CCC credits 0.5/9 = 0.056 (agent's reconstruction of RISE's method, which reproduces RISE's own sensitivity results; RISE does not state it per loan).
+
+**Loans across Fritidsbanken.** 2024: 1.8 million loans on 539,190 items, of which 791,461 in-store, 853,289 "snabblån" and 168,649 school loans (Årsmöteshandlingar 2025, dok-2, p. 4). 2025: 2.2 million loans on 587,826 items, about 1,060,000 of them snabblån, gear used on the spot at events (Årsmöteshandlingar 2026-1, pp. 4 and 10). Snabblån rarely replace a purchase, so Fritidsbanken's totals should not go into CCC as they are. The page now says so next to the count.
+
+**Travel.** 72 % car is the only measured figure; 20 % of drivers drive more than 10 km (RISE p. 23). Umeå: median 3 km, mean 6 km from home, excluding 8 respondents living over 90 km away (Bromark Table 4, p. 49, n = 264). No figure exists for items per visit; 38 % borrowed more than they had planned on their last visit (RISE Fig. 4, p. 11, n = 113).
+
+**Published climate figures.** All derive from RISE's ideal case: about 6 kg CO2e per pair of skis a year privately against about 2 kg in the lending model, a 70 % cut (p. 21), with borrowers arriving on foot; 815 t a year scales that to all 180,000 items as if all were skis, which RISE calls probably an overestimate (p. 25). Ramböll 2021 turns 815 t into 8.6 t per bank and 60,200 kr a year at ASEK 7 kr/kg (slide 7). Fritidsbanken publishes no climate account of its own in the reports that could be read. Not opened: the Norwegian ski-lending LCA, *J. Cleaner Production* 2025, doi 10.1016/j.jclepro.2025.145350 (ScienceDirect 403).
+
+**Open, for Henric:** the only measured replacement shares for free lending are 25 % and 30 %, against the 50 % default that comes from Blocket's second-hand survey. The page now says so in the source text; the value is unchanged until he decides.

@@ -184,6 +184,7 @@ input.slot::-webkit-inner-spin-button,
 input.slot::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 
 .ask-list { margin-top: 1.25rem; max-width: var(--measure); font-size: 0.95rem; color: var(--ink-light); }
+.ask-note { margin-top: 0.75rem; max-width: var(--measure); font-size: 0.95rem; color: var(--ink-light); }
 .linkbtn {
   font: inherit; font-weight: 600; color: var(--lavender-text);
   background: none; border: 0; padding: 0; cursor: pointer;

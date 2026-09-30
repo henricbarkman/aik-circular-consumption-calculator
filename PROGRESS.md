@@ -1,5 +1,12 @@
 # PROGRESS — CCC, Circular Consumption Calculator
 
+## 2026-09-30 (lån)
+- Henric: böcker ja, men biblioteken ligger nära så bilandelen är lägre. Ett lån räknas som en del av ett nyköp: "ett lån ersätter 1 åttondels nyköp", kanske närmare en sjättedel. Kolla Fritidsbankens rapporter om hur mycket ett lån ersätter.
+- Demi: ett lån ersätter 1/L av ett nyköp, med L per sort ur källor (skidor 9 enligt RISE, inte 6: egna skidor används 7,5 till 10 gånger). Böcker 0,56 kg (Bokbranschens klimatinitiativ 2025), bilandel 38 % till biblioteket (Novus 2018), viktat efter besök när listan blandar böcker och annat. Korta lån blir minus med utgångsvärdena; sidan visar vid vilken bilandel det vänder. Granskad: den viktade bilandelen, texten när det blir minus och spannet med egna värden rättade. Provat i Firefox och Chromium.
+- Fritidsbanken: skidornas 1/9 stöds (1,7 lån per par och år). Låntagarna själva säger 25 % (n = 427, Karlstads universitet 2023) och 30 % (RISE 2020) att de annars hade köpt, mot 50 % i verktyget. Står i källtexten; värdet oändrat.
+- → Väntar på Henric: ska andelen för lån sänkas från 50 % till 30 %?
+- → Sedan: föremål per besök.
+
 ## 2026-09-30 (granskning)
 - Henric: kör flera granskare, kod, användare, metod och klimatfaktorerna. Alla delar ska vara tipp topp.
 - Demi: fem granskare (kod, användare, metod, faktorer i två delar). Rättat:
