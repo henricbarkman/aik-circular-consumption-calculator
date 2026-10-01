@@ -1,5 +1,11 @@
 # PROGRESS — CCC, Circular Consumption Calculator
 
+## 2026-10-01 (hyrt, lånat, på plats)
+- Henric: dela upp hyrt och lånat igen och lägg till lån på plats. Hälften av resan räknas på besöket. Bilandel 68 % ur resvaneundersökningen. Föremål per besök för hela listan. Snabblånen ska räknas. Ingen barnkategori; skridskor om det går att säga ärligt.
+- Demi: fem sätt i meningen: köpts second hand 50 %, hyrts ut 50 % (antagande), lånats ut 25 % (Karlstads universitet, RISE, CICERO), lånats ut på plats 25 % utan resor, lagats. Nytt steg "Andel av resan som räknas på besöket", 50 % (Schibsted 2023, Johnson och Plepys 2021, RISE 2020), som också gäller butiksresorna som dras av. Bil 68 % (Trafikanalys 2025). Föremål per besök för hela listan när listan har flera sorter; stegen säger när det gäller i stället för sortens eget tal. Snabblån och skollån räknas som lån på plats. Skridskor 11,8 kg som undre gräns (Vestblad 2016). Utredningen i `docs/research-factors-2026-09-30.md`, avsnitt 7; besluten i README.
+- Talen: ett skidlån −2,10 → −1,03 kg; familj som hade köpt +8,83; hyrt −0,20; på plats +0,56. Startsidan 4,8 → 5,1 ton. 1 000 begagnade böcker −143 → +20 kg; 1 000 lånade böcker −297 → −311 kg.
+- → Nästa: läs den norska skidlånestudien (J. Cleaner Production 2025) om Henric laddar upp den; sedan inbäddning för Arvika och Smarta Kartan.
+
 ## 2026-09-30 (lån)
 - Henric: böcker ja, men biblioteken ligger nära så bilandelen är lägre. Ett lån räknas som en del av ett nyköp: "ett lån ersätter 1 åttondels nyköp", kanske närmare en sjättedel. Kolla Fritidsbankens rapporter om hur mycket ett lån ersätter.
 - Demi: ett lån ersätter 1/L av ett nyköp, med L per sort ur källor (skidor 9 enligt RISE, inte 6: egna skidor används 7,5 till 10 gånger). Böcker 0,56 kg (Bokbranschens klimatinitiativ 2025), bilandel 38 % till biblioteket (Novus 2018), viktat efter besök när listan blandar böcker och annat. Korta lån blir minus med utgångsvärdena; sidan visar vid vilken bilandel det vänder. Granskad: den viktade bilandelen, texten när det blir minus och spannet med egna värden rättade. Provat i Firefox och Chromium.

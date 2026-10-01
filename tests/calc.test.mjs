@@ -99,7 +99,7 @@ test('formatting never hides a small end or the value used', () => {
 test('every factor that says "source" names one', () => {
   const all = [...CATEGORIES, ...Object.values(SHARED), ...Object.values(METHODS)];
   for (const f of all) {
-    const defs = [f, f.lca, f.itemsPerTrip, f.tripsPerCirculation, f.repairShare, f.repairKg, f.loansPerPurchase].filter((d) => d && typeof d === 'object' && 'kind' in d);
+    const defs = [f, f.lca, f.itemsPerTrip, f.tripsPerCirculation, f.replacementShare, f.repairShare, f.repairKg, f.loansPerPurchase].filter((d) => d && typeof d === 'object' && 'kind' in d);
     for (const d of defs) {
       if (d.kind === 'assumption') assert.ok(d.why, `assumption without a reason: ${JSON.stringify(d).slice(0, 80)}`);
       if (d.kind !== 'source') continue;
@@ -242,4 +242,113 @@ test('break-even car share: the net is zero there, and 0 when no car share can h
   assert.equal(breakEvenCarPct({ ...p, opEf: 50, transportOn: false }), 0);
   assert.equal(breakEvenCarPct({ ...p, opEf: 50, carPct: 0 }), 0);
   assert.equal(breakEvenCarPct({ ...shared, rows: [clothes] }), null, 'positive net has no break-even');
+});
+
+// Henric 2026-10-01: renting, lending and lending on the spot are three forms,
+// each with its own share, and only part of each trip is charged to the visit.
+// The page's defaults: 68 % by car, half of each trip.
+const page = { ...shared, carPct: 68, tripPct: 50 };
+const skiLoan = { count: 1, lca: 29, itemsPerTrip: 1, loansPerPurchase: 9 };
+
+test('the share of the trip scales the trips charged and the shop trips credited alike', () => {
+  const drills = { count: 100, lca: 23.5, itemsPerTrip: 1 };
+  const full = calculate({ ...shared, trips: 4, rows: [drills] });
+  const half = calculate({ ...shared, trips: 4, tripPct: 50, rows: [drills] });
+  close(half.perTripKg, 3.57 / 2);          // 0.75 × 0.5 × 4 × 7 × 0.17
+  close(half.perShopKg, 1.785 / 2);
+  close(half.tripsGross, full.tripsGross / 2);
+  close(half.tripsCredit, full.tripsCredit / 2);
+  close(half.transportKg, 267.75 / 2);
+  close(half.perTripFullKg, 3.57);          // shown before the share is applied
+  close(half.avoided, full.avoided);        // nothing but the trips moves
+  close(half.opsKg, full.opsKg);
+  // Half the trip at 68 % by car is the same as all of it at 34 %.
+  close(calculate({ ...page, trips: 4, rows: [drills] }).net,
+    calculate({ ...shared, carPct: 34, trips: 4, rows: [drills] }).net);
+  // Leaving the share out charges the whole trip, as before 2026-10-01.
+  close(calculate({ ...shared, tripPct: 100, rows: [clothes] }).net, 4821.6);
+});
+
+test('one adult ski loan, lent: 25 %, four trips, 68 % by car, half the trip', () => {
+  const r = calculate({ ...page, replacementPct: 25, trips: 4, rows: [skiLoan] });
+  close(r.avoided, 0.25 / 9 * 29);          // 0.80556
+  close(r.perTripKg, 0.68 * 0.5 * 4 * 7 * 0.17); // 1.6184
+  // 1.6184 − 0.25/9 × 0.8092 = 1.59592
+  close(r.transportKg, 1.6184 - 0.25 / 9 * 0.8092);
+  close(r.opsKg, (1 - 0.25 / 9) * 0.25);    // 0.24306
+  assert.equal(r.net.toFixed(2), '-1.03');
+});
+
+test('one ski loan to a family that would have bought: 100 %, three loans a pair, two pairs a visit', () => {
+  const r = calculate({ ...page, replacementPct: 100, trips: 4, rows: [{ ...skiLoan, itemsPerTrip: 2, loansPerPurchase: 3 }] });
+  close(r.avoided, 29 / 3);                 // 9.6667
+  // half a visit × 1.6184 − (1/3 × ½) × 0.8092 = 0.8092 − 0.13487 = 0.67433
+  close(r.transportKg, 0.5 * 1.6184 - (1 / 3) * 0.5 * 0.8092);
+  close(r.opsKg, (2 / 3) * 0.25);
+  assert.equal(r.net.toFixed(2), '8.83');
+});
+
+test('one ski rental: 50 %, otherwise as lending', () => {
+  const r = calculate({ ...page, replacementPct: 50, trips: 4, rows: [skiLoan] });
+  close(r.avoided, 0.5 / 9 * 29);           // 1.6111
+  assert.equal(r.net.toFixed(2), '-0.20');
+});
+
+test('one ski loan on the spot: no trips, so no shop trip to credit either', () => {
+  const r = calculate({ ...page, replacementPct: 25, trips: 0, rows: [skiLoan] });
+  close(r.shopTrips, 0);
+  close(r.transportKg, 0);
+  close(r.net, 0.25 / 9 * 29 - (1 - 0.25 / 9) * 0.25); // 0.80556 − 0.24306 = 0.5625
+  assert.equal(r.net.toFixed(2), '0.56');
+});
+
+test('items per visit for the whole list replaces each row\'s own', () => {
+  const skis = { count: 100, lca: 29, itemsPerTrip: 1, loansPerPurchase: 9 };
+  const boots = { count: 100, lca: 15, itemsPerTrip: 1, loansPerPurchase: 9 };
+  const p = { ...page, replacementPct: 25, trips: 4 };
+  const apart = calculate({ ...p, rows: [skis, boots] });
+  const together = calculate({ ...p, itemsPerVisit: 2, rows: [skis, boots] });
+  close(apart.visits, 200);                 // each pair its own visit
+  close(together.visits, 100);              // skis and boots fetched together
+  close(together.shopVisits, apart.shopVisits / 2);
+  close(together.transportKg, apart.transportKg / 2);
+  close(together.avoided, apart.avoided);
+  assert.equal(together.itemsPerVisit, 2);
+  assert.deepEqual(together.rows.map((r) => r.perVisitUsed), [2, 2]);
+  assert.deepEqual(apart.rows.map((r) => r.perVisitUsed), [1, 1]);
+  assert.equal(apart.itemsPerVisit, null);
+  // No list value: a single row comes out exactly as before.
+  close(calculate({ ...shared, itemsPerVisit: null, rows: [clothes] }).net, 4821.6);
+});
+
+test('the methods: three loan forms, each with its own share and trips', () => {
+  assert.deepEqual(Object.keys(METHODS), ['secondhand', 'rent', 'borrow', 'onsite', 'repair']);
+  const m = (id) => [METHODS[id].label, METHODS[id].replacementShare?.value, METHODS[id].replacementShare?.kind, METHODS[id].tripsPerCirculation.value, METHODS[id].loan === true];
+  assert.deepEqual(m('secondhand'), ['köpts second hand', 50, 'source', 2, false]);
+  assert.deepEqual(m('rent'), ['hyrts ut', 50, 'assumption', 4, true]);
+  assert.deepEqual(m('borrow'), ['lånats ut', 25, 'source', 4, true]);
+  assert.deepEqual(m('onsite'), ['lånats ut på plats', 25, 'assumption', 0, true]);
+  assert.equal(METHODS.repair.replacementShare, undefined, 'repair keeps its shares per product type');
+  // The library's car share is for lending, not renting.
+  assert.deepEqual(Object.keys(METHODS).filter((id) => METHODS[id].libraryCarShare), ['borrow']);
+  // Old links: hur=rent opened the merged form at 50 % and still opens renting at 50 %;
+  // hur=borrow opens lending. The page takes hur as a method id when there is one.
+  assert.ok(Object.hasOwn(METHODS, 'rent') && Object.hasOwn(METHODS, 'borrow'));
+});
+
+test('shared defaults: 68 % by car from the travel survey, half of each trip', () => {
+  assert.equal(SHARED.carShare.value, 68);
+  assert.equal(SHARED.carShare.kind, 'source');
+  assert.equal(SHARED.tripShare.value, 50);
+  assert.equal(SHARED.tripShare.kind, 'source');
+  assert.equal(SHARED.itemsPerVisitList.value, null);
+  assert.equal(SHARED.carShareLibrary.value, 38);
+});
+
+test('skates are a labelled lower bound: the value is the bottom of the span', () => {
+  const s = CATEGORIES.find((c) => c.id === 'skridskor');
+  assert.equal(s.lca.value, s.lca.low);
+  assert.ok(s.lca.high > s.lca.value);
+  assert.match(s.lca.typical, /undre gräns/);
+  assert.equal(s.loansPerPurchase.kind, 'assumption');
 });

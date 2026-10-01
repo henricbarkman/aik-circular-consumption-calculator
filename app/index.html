@@ -34,7 +34,7 @@
         Hos oss har <span id="sentence-rows"></span><button type="button" class="slot-add" id="btn-add-row" aria-label="Lägg till en sorts produkt"><span aria-hidden="true">+</span>&#8201;fler</button>
         <label class="visually-hidden" for="in-method">Hur produkterna har cirkulerat</label><select class="slot" id="in-method"></select>.
       </h1>
-      <p class="ask-note needs-calc" id="method-note" hidden>Räkna varje lån för sig: en sak som lånats ut tre gånger är tre lån. Utrustning som bara används på plats, till exempel på ett evenemang, räknas inte.</p>
+      <p class="ask-note needs-calc" id="method-note" hidden></p>
       <p class="load-error">Uträkningen kunde inte starta. Ladda om sidan.</p>
       <noscript><p class="load-error load-error--on">Uträkningen behöver JavaScript för att räkna.</p></noscript>
       <p class="ask-list needs-calc">Många sorter? <button type="button" class="linkbtn" id="btn-list">Läs in en lista</button> (Excel eller CSV med sort och antal per rad) eller <a href="#" id="dl-template" download="ccc-mall.csv">hämta en mall</a>.</p>
@@ -92,7 +92,7 @@
 
     <section class="wrap method" aria-labelledby="method-h">
       <h2 id="method-h">Om metoden</h2>
-      <p>Uträkningen utgår från utsläppen för att tillverka en ny produkt och få den till butiken, och räknar hur mycket av det som slipper uppstå när någon köper begagnat, hyr, lånar eller lagar i stället. Ett lån räknas som en del av ett nyköp, eftersom den som har en egen sak använder den många gånger. Sedan dras det bort som cirkuleringen orsakar utöver ett nyköp: resor, drift och, för en lagning, reservdelarna.</p>
+      <p>Uträkningen utgår från utsläppen för att tillverka en ny produkt och få den till butiken, och räknar hur mycket av det som slipper uppstå när någon köper begagnat, hyr, lånar eller lagar i stället. Ett lån eller en uthyrning räknas som en del av ett nyköp, eftersom den som har en egen sak använder den många gånger. Sedan dras det bort som cirkuleringen orsakar utöver ett nyköp: resor, drift och, för en lagning, reservdelarna.</p>
       <p>En del klimatsiffror för second hand räknar som om varje begagnat köp ersatte ett nytt och resorna inte fanns. Det gör resultaten för stora. Här syns båda avdragen, och du ser hur mycket de betyder.</p>
       <h3>Det här räknar verktyget inte med</h3>
       <ul>
@@ -100,13 +100,13 @@
         <li>Att en begagnad eller lagad produkt kan ha kortare liv kvar än en ny. Mätningarna av andelen som ersätter ett nyköp frågar bara om köpet.</li>
         <li>Användningen, som tvätt och el, eftersom den är ungefär densamma för en ny och en begagnad sak.</li>
         <li>Resan när någon lämnar in saker till butiken.</li>
+        <li>Omvägen när ett besök görs ihop med andra ärenden. Ungefär hälften av besökarna åker bara för besöket, och resten passar på när de ändå är ute (Schibsted 2023, Johnson och Plepys 2021). Därför räknas hälften av varje resa på besöket, och omvägen för den andra hälften räknas inte.</li>
         <li>Att ett lån ibland följs av ett köp, som när någon provat och fastnat. Hos Fritidsbanken köpte 20 procent av låntagarna ny utrustning efter lånet (RISE 2020), och efter Göteborgs provlån av elcyklar hade 7 till 25 procent köpt en egen.</li>
         <li>Att en utlåning ibland köper in sina saker nya. Ett bibliotek köper nya böcker, och en bok lånas ut ungefär 18 gånger (uträknat ur Kungliga bibliotekets statistik 2024), så varje lån bär ungefär en artondel av en ny bok.</li>
         <li>Vad som händer när produkten till slut slängs. Det är litet: för en bärbar dator ungefär 3 av 193 kg under hela livet.</li>
       </ul>
       <h3>Det här räknas försiktigt</h3>
       <ul>
-        <li>Alla resor räknas som om de gjordes bara för besöket. I Sverige åker ungefär hälften av dem som hämtar något begagnat just för det (Schibsted 2023).</li>
         <li>En del av dem som inte hade köpt nytt hade köpt begagnat någon annanstans och åkt dit ändå.</li>
         <li>Den som lämnar tillbaka och lånar nytt vid samma besök gör färre resor per lån än uträkningen räknar med.</li>
       </ul>

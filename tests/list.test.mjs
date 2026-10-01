@@ -93,6 +93,10 @@ test('words that only look like a product type', () => {
   assert.deepEqual(typesOf('Disko'), []);
   assert.deepEqual(typesOf('TV-bänk'), []);
   assert.deepEqual(typesOf('Snömobil'), []);
+  // "Skridskor" ends in "skor", so it was counted as shoes until skates had a type.
+  assert.deepEqual(typesOf('Skridskor'), ['skridskor']);
+  assert.deepEqual(typesOf('Hockeyskridskor'), ['skridskor']);
+  assert.deepEqual(typesOf('Rullskridskor'), []);
   assert.deepEqual(typesOf('Elcykel'), ['elcyklar']);
   assert.deepEqual(typesOf('Damcykel'), ['cyklar']);
   assert.deepEqual(typesOf('Elsparkcykel'), []);

@@ -267,11 +267,11 @@ L per category, as written into `app/factors.js`. Every number was read in the s
 
 **Books, new-item value 0.56 kg (0.56-1.32).** Bokbranschens klimatinitiativ, *Bokbranschens klimatpåverkan 2024* (2025), pp. 21-22: 411 g production + 123 g publisher = 534 g, plus 24 g distribution to the shop; a book printed abroad is 1.32 kg. https://forlaggare.se/wp-content/uploads/2025/10/BBKI-Bokbranschens-klimatinitiativ-Rapport.pdf
 
-**Library car share 38 %.** Novus for Svensk biblioteksförening, 2018, pp. 8-9: 35 % go by car, 33 % walk, 11 % cycle, 11 % public transport, 8 % don't know, so 38 % of those who answered. Six in ten live within 3 km of their library; in smaller towns and rural areas 51 % drive. Used as the default when the method is renting/lending and every counted row is books. https://biblioteksforeningen.se/wp-content/uploads/2018/05/novus-rapport-svensk-biblioteksforening-final.pdf
+**Library car share 38 %.** Novus for Svensk biblioteksförening, 2018, pp. 8-9: 35 % go by car, 33 % walk, 11 % cycle, 11 % public transport, 8 % don't know, so 38 % of those who answered. Six in ten live within 3 km of their library; in smaller towns and rural areas 51 % drive. Used as the default when the method is lending (renting until 2026-10-01) and every counted row is books. https://biblioteksforeningen.se/wp-content/uploads/2018/05/novus-rapport-svensk-biblioteksforening-final.pdf
 
 **A library buys new books.** Kungliga biblioteket, *Bibliotek 2024*: public libraries bought 1,759,924 printed books (Table 16, p. 33) and made 31,290,726 initial loans of printed books (Table 20, p. 38), about 18 initial loans per book bought (28 with renewals). Each loan thus carries about 1/18 of a new book. Not counted in the tool; stated on the page.
 
-**What the result looks like with the defaults** (75 % car, 7 km, 4 one-way trips per visit, 0.25 kg operations per item). Net per loan: phones +15, laptops +17, TV +20, sofas +7 kg; clothes −1.1, shoes −2.9, chairs −0.7, tables −0.4, drills −3.2, skis −2.1, bikes −2.8, e-bikes −3.0, kitchen −2.9, books (38 % car) −0.3 kg. Short loans pay for a whole round trip but save a fraction of a purchase. The page shows the car share at which the result turns positive (skis about 29 %, books about 13 %). Two sources confirm the pattern: RISE 2020 section 3.5.1.3 (car trips cut Fritidsbanken's saving from over 70 % to 30 %, even with half of each trip allocated) and Zamani, Sandin and Peters, "Life cycle assessment of clothing libraries", *J. Cleaner Production* 162:1368-1375, 2017, doi 10.1016/j.jclepro.2017.06.128 (customer travel by car can cancel a clothing library's benefit).
+**What the result looked like with the defaults of 2026-09-30** (50 % replacement, 75 % car, the whole trip, 7 km, 4 one-way trips per visit, 0.25 kg operations per item; section 7i has the numbers after 2026-10-01). Net per loan: phones +15, laptops +17, TV +20, sofas +7 kg; clothes −1.1, shoes −2.9, chairs −0.7, tables −0.4, drills −3.2, skis −2.1, bikes −2.8, e-bikes −3.0, kitchen −2.9, books (38 % car) −0.3 kg. Short loans pay for a whole round trip but save a fraction of a purchase. The page shows the car share at which the result turns positive (skis about 29 %, books about 13 %). Two sources confirm the pattern: RISE 2020 section 3.5.1.3 (car trips cut Fritidsbanken's saving from over 70 % to 30 %, even with half of each trip allocated) and Zamani, Sandin and Peters, "Life cycle assessment of clothing libraries", *J. Cleaner Production* 162:1368-1375, 2017, doi 10.1016/j.jclepro.2017.06.128 (customer travel by car can cancel a clothing library's benefit).
 
 **How others count a loan.**
 - Libraries of things mostly credit one whole new item per loan ("the act of lending an item has the direct impact of avoiding carbon emissions that would have been generated had the user chosen to purchase that item new", Benthyg Cymru research report, 2022, p. 7). Against CCC's 0.5/L that is 2L times higher: about 18 times for skis, 40 for drills.
@@ -290,10 +290,106 @@ Rejected: counting per item in the lending stock (RISE's convention; a lending s
 
 **Loans per item.** Loan period 14 days (RISE p. 17). Skis are lent 1.7 times a year (RISE Table 5, p. 21, from Vestblad). Deje register January 2013-December 2015: slalom skis 407 loans on 118 usable pairs, 3.45 per pair; cross-country skis 2.43; skates 2.02 (Vestblad, Karlstads universitet 2016, Table 1, p. 9, https://kau.diva-portal.org/smash/get/diva2:940899/FULLTEXT01.pdf). Owned skis are used 1.5-2 times a year, so one loan is about one use of an owned pair: **supports L = 9 for skis.** Expressed per loan, RISE's model credits about 0.06 of a new pair; CCC credits 0.5/9 = 0.056 (agent's reconstruction of RISE's method, which reproduces RISE's own sensitivity results; RISE does not state it per loan).
 
-**Loans across Fritidsbanken.** 2024: 1.8 million loans on 539,190 items, of which 791,461 in-store, 853,289 "snabblån" and 168,649 school loans (Årsmöteshandlingar 2025, dok-2, p. 4). 2025: 2.2 million loans on 587,826 items, about 1,060,000 of them snabblån, gear used on the spot at events (Årsmöteshandlingar 2026-1, pp. 4 and 10). Snabblån rarely replace a purchase, so Fritidsbanken's totals should not go into CCC as they are. The page now says so next to the count.
+**Loans across Fritidsbanken.** 2024: 1.8 million loans on 539,190 items, of which 791,461 in-store, 853,289 "snabblån" and 168,649 school loans (Årsmöteshandlingar 2025, dok-2, p. 4). 2025: 2.2 million loans on 587,826 items, about 1,060,000 of them snabblån, gear used on the spot at events (Årsmöteshandlingar 2026-1, pp. 4 and 10). ~~Snabblån rarely replace a purchase, so Fritidsbanken's totals should not go into CCC as they are.~~ Reversed 2026-10-01: snabblån and school loans count, as "lånats ut på plats" with no trips (section 7e). Fritidsbanken's totals still mix the forms, so split them before entering them.
 
 **Travel.** 72 % car is the only measured figure; 20 % of drivers drive more than 10 km (RISE p. 23). Umeå: median 3 km, mean 6 km from home, excluding 8 respondents living over 90 km away (Bromark Table 4, p. 49, n = 264). No figure exists for items per visit; 38 % borrowed more than they had planned on their last visit (RISE Fig. 4, p. 11, n = 113).
 
 **Published climate figures.** All derive from RISE's ideal case: about 6 kg CO2e per pair of skis a year privately against about 2 kg in the lending model, a 70 % cut (p. 21), with borrowers arriving on foot; 815 t a year scales that to all 180,000 items as if all were skis, which RISE calls probably an overestimate (p. 25). Ramböll 2021 turns 815 t into 8.6 t per bank and 60,200 kr a year at ASEK 7 kr/kg (slide 7). Fritidsbanken publishes no climate account of its own in the reports that could be read. Not opened: the Norwegian ski-lending LCA, *J. Cleaner Production* 2025, doi 10.1016/j.jclepro.2025.145350 (ScienceDirect 403).
 
-**Open, for Henric:** the only measured replacement shares for free lending are 25 % and 30 %, against the 50 % default that comes from Blocket's second-hand survey. The page now says so in the source text; the value is unchanged until he decides.
+**Decided 2026-10-01:** the only measured replacement shares for free lending are 25 % and 30 %, against the 50 % default that came from Blocket's second-hand survey. Lending now uses 25 % and renting keeps 50 % (section 7a).
+
+## 7. Renting, lending and lending on the spot (2026-10-01)
+
+Henric's decisions of 2026-10-01, built the same day. The research behind them was run 2026-09-30; every number below was read in the cited source during that run. Local copies were under `/tmp/ccc-rent/` and are not kept. Tags: **MEASURED** (survey or register result) and **ASSUMPTION** (stated as an assumption, scenario or unsupported claim).
+
+### 7a. Three forms instead of one
+
+On 2026-09-30 the tool merged renting and borrowing into one form, "hyrts eller lånats", on the reasoning that they give the same result. That was reversed: the measured shares differ by a factor of about two, so one number cannot serve both.
+
+| Form | id | Share that replaces a new purchase | Kind | One-way trips per visit |
+|---|---|---|---|---|
+| köpts second hand | `secondhand` | 50 % | source (Schibsted/Blocket 2023) | 2 |
+| hyrts ut | `rent` | 50 % | assumption | 4 |
+| lånats ut | `borrow` | 25 % | source | 4 |
+| lånats ut på plats | `onsite` | 25 % | assumption | 0 |
+| lagats | `repair` | 82 % clothes, 50 % the rest | source / assumption | 4 |
+
+The loans per new purchase (L, section 6) apply to all three loan and rental forms; L is about how much an owner uses the thing, not about how it is lent. The id `rent` is kept for renting so that links made during the merged period (`hur=rent`, 50 %) keep their share; `hur=borrow` opened the merged form then and opens lending now, at 25 %.
+
+**Paid rental (`rent`, 50 %, assumption).** The measurements spread too much to call one of them the figure.
+- Johnson, E. and Plepys, A. (2021), "Product-Service Systems and Sustainability: Analysing the Environmental Impacts of Rental Clothing", *Sustainability* 13(4), 2118, https://doi.org/10.3390/su13042118. Formal-dress rental in Stockholm, 57 of 856 active users answered. Self-reported replacement 70 % (p. 10), company data 33 % (p. 7, method not described). MEASURED. 53 % still buy dresses (p. 10).
+- Library of Things, London, pay-per-day rental of tools and appliances: "one in four borrows prevents a purchase" (2021 Year in Review), raised to 50 % in February 2024 "based on the findings of our most recent Impact Survey" (https://www.libraryofthings.co.uk/blog/how-we-calculate-our-impact-2024-update). MEASURED, but with no sample size, answer split or method published. The Nesta evaluation of 2019 (https://media.nesta.org.uk/documents/Library_of_Things_-_Evaluation_Report.pdf, PDF p. 35) said the saving could not yet be inferred without asking each borrower.
+- Wear2Share (Fraunhofer ISI et al., final report, p. 30), clothing-rental subscriptions in Germany: the share of clothing bought new fell from 50 % to 32 % (children's, Kilenda) and from 73 % to 33 % (women's, Stay Awhile); second hand and gifts were unchanged. MEASURED (self-report, sample sizes redacted). My arithmetic: about 0.7 and 1.0 new items displaced per rented item, as wardrobe shares.
+- Martin, Lazarevic and Gullström (2019), *Sustainability* 11, 190, Table 6, p. 7: 25 % (low) and 50 % (high) for skis, tools, bikes and consoles rented peer to peer. IVL C371 (2019), p. 61: 20 % for tool rental. Both ASSUMPTION.
+- Grover (electronics subscription): "a quarter of customers" could not otherwise have obtained the products. Company claim, no n. Not used.
+
+**Free lending (`borrow`, 25 %, source).**
+- Karlstads universitet 2023 (Högman, slides 2023-04-24, slide 14): 25 % would have bought, 48 % would have skipped the activity. n = 427 borrowers aged 7-25, summer 2022, 52 banks. MEASURED. Section 6a has the details.
+- RISE 2020, p. 22: 30 % answered "köpt". MEASURED.
+- Julsrud, T. E. (2021), "Bærekraftig deling i norske kommuner", CICERO Policy Note 2021:01, Table 3.12, p. 13, https://hdl.handle.net/11250/2737245. Free lending schemes in five Norwegian municipalities, Kantar panel of 1,319; the base for the table is those who borrowed in the past year, about 83 people (19 answers = 23 %). Alternatives, several allowed: bought new 23 %, bought used 29 %, borrowed from friends 33 %, rented elsewhere 11 %, would not have done the activity 34 %. MEASURED. The only free-lending survey that separates new from used, and it lands close to the Swedish 25 %.
+- The default is 25 %: the two Swedish measurements give 25 and 30, and neither asks whether the purchase would have been new.
+
+**Lending on the spot (`onsite`, 25 %, assumption).** Nobody has measured it. The share for lending is used. A school skating day probably replaces more purchases than a try-it event, where many would never have bought anything. If the would-be buyer would rarely use their own, as a child who skates once a year and outgrows the skates after one or two times, the page says to lower L instead.
+
+### 7b. Share of the trip charged to the visit: 50 % (source)
+
+Before 2026-10-01 every trip was counted as if made only for the visit. Now half of each trip is charged, and the shop trips credited for avoided purchases are scaled the same way, so the comparison stays like for like.
+- Schibsted, *The Second Hand Effect Report 2023*, p. 17: 52 % of Swedes who fetch something bought second hand make the trip only for that. MEASURED.
+- Johnson and Plepys 2021, p. 10: 45 % made a dedicated trip to the rental store, 55 % combined it with other errands. n = 57. MEASURED.
+- RISE 2020, section 3.5.1.3, p. 23: 50 % of the driving to Fritidsbanken allocated to the loan, because the purpose of the trip is unknown. ASSUMPTION.
+- No measured single-errand share was found for Fritidsbanken, BUA, a tool library or a ski or tool rental shop.
+
+Counting nothing for a combined trip is a simplification: a detour adds some kilometres. The page lists that under what the tool leaves out.
+
+### 7c. Car share: 68 % (source)
+
+Trafikanalys, *Resvanor i Sverige 2024* (Statistik 2025:17), table 1 in the table collection (https://www.trafa.se/globalassets/statistik/resvanor/2025/resvanor-i-sverige-2024.xlsx): trips for service and shopping, 363,730 of 536,748 thousand by car as the main mode, 68 %. MEASURED. It replaces 75 %, which had no source of its own. For comparison: RISE 2020 measured 72 % by car to Fritidsbanken (p. 23), and Mistra Future Fashion assumed 50 % for clothes shopping (2019).
+
+The library rule (38 % by car when every row is books, mixed lists weighted by visits, Novus 2018) now applies to lending only. Rented books are not a library's.
+
+### 7d. Items per visit for the whole list
+
+No published figure exists for items per visit or transaction at Fritidsbanken, BUA or a library of things, nor for how often a return and a new loan happen in one visit. Closest proxies: Fritidsbanken Avesta summer 2025, 345 borrowers and 841 articles, 2.4 per borrower over the season (lokalti.se, 5 Nov 2025); TURBO Tromsø 2022, 7.1 pieces per user and year (Solum et al. 2024); RISE 2020, 38 % borrowed more than they had planned on their last visit (Fig. 4, p. 11).
+
+So the page keeps each product type's own items per visit by default and offers one number for the whole list when the list has two or more types. When it is set, it replaces every row's own, and the steps say so. A single row is unchanged.
+
+### 7e. Snabblån and school loans now count
+
+Fritidsbanken counts articles lent, not visits. 2024: 791,461 in store, 853,289 snabblån and 168,649 school loans (Årsmöteshandlingar 2025, dok-2, p. 4). Snabblån are gear used on the spot while Fritidsbanken is present, at a beach, park or ice rink, "men inte låna med sig hem" (Årsmöteshandlingar 2023, PDF p. 15).
+
+Until 2026-10-01 the page said such loans did not count. Henric reversed that: a snabblån can replace a purchase too, it just costs no trip. They go in as **lånats ut på plats**, with 0 trips and the 25 % share.
+
+**School loans also belong to lånats ut på plats.** A school borrows gear from Fritidsbanken for a longer period and lends it to pupils during breaks, reporting the loans weekly (Årsmöteshandlingar 2024, the section on the new loan form "Skol-lån"; the model is called "lekotek med skol-lån"). The pupil uses the gear on the school grounds and makes no trip. The school's alternative would be its own set, used by many pupils over many years, so L per school loan is high, well above the 9 used for skis. In 2025, 750,544 pupils were activated through school loans (Årsmöteshandlingar 2026, verksamhetsberättelse 2025, p. 4). The page does not set a separate L for school loans; the user lowers or raises L in step 2.
+
+### 7f. No children's category
+
+Fritidsbanken 2025: 0-5 years 10 %, 6-10 years 25 %, 11-15 years 19 % of those who use the gear, 54 % aged 0-15 (Årsmöteshandlingar 2026, p. 4). MEASURED, base not stated. Henric decided against a separate children's category: no LCA of children's skis or skates was found, nor a measured number of seasons before children outgrow them (a retailer says one or two seasons in the fastest growth). The page says instead to lower L when the would-be buyer would rarely use their own.
+
+### 7g. Skates: a labelled lower bound
+
+Vestblad, J. (2016), *Cirkulerande återanvändning av sportartiklar*, Karlstads universitet, https://kau.diva-portal.org/smash/get/diva2:940899/FULLTEXT01.pdf. One pair of adult hockey skates, size 43/44, was taken apart: plastic 0.399 kg, steel 0.271 kg, leather 0.531 kg, nylon 0.613 kg (Table 2). With the CO2 factors of Table 5 (2.92, 5.23, 4.5 and 11.2 kg per kg) the materials give 11.8 kg. Materials only: manufacturing, packaging and freight are missing. For skis the same study gives 17.2 kg for materials against 29 kg for the whole product in RISE 2020 (p. 21); the same ratio gives skates about 20 kg.
+
+In the tool: value 11.8 kg, span 11.8-20 kg, labelled as a lower bound on the page. L = 9 as for skis, an assumption. The Deje register gives 2.02 loans per pair of skates a year against 3.45 for slalom skis (Vestblad Table 1).
+
+### 7h. Not read
+
+Guillen-Royo, Dæhlin, Julsrud and Aamaas (2025), "Sharing for wellbeing and sustainability. Lending sports equipment and the role of libraries in Norway", *J. Cleaner Production*, https://doi.org/10.1016/j.jclepro.2025.145350 (CC BY, open access). It contains an LCA of borrowing downhill ski gear in three Norwegian sharing contexts and very likely has measured transport and counterfactual data for exactly the ski case. ScienceDirect answers this machine with a captcha and no repository copy was found. Henric may upload the PDF.
+
+### 7i. What changed in the numbers
+
+Per loan of adult skis (29 kg, L 9, one pair per visit, 7 km, 0.17 kg per km, 0.25 kg operations), with 68 % by car and half of each trip:
+
+| Case | Settings | Net per loan |
+|---|---|---|
+| lånats ut, defaults | 25 %, 4 trips | −1.03 kg (was −2.10 with 50 % and 75 % car, whole trip) |
+| a family that would have bought | 100 %, L 3, 2 pairs per visit | +8.83 kg |
+| hyrts ut, defaults | 50 %, 4 trips | −0.20 kg |
+| lånats ut på plats | 25 %, 0 trips | +0.56 kg |
+
+| Page | Before | After |
+|---|---|---|
+| Default, 1,200 clothes second hand | 4,822 kg | 5,056 kg |
+| 1,000 books second hand | −143 kg | +20 kg |
+| 1,000 books lent (38 % car) | −297 kg | −311 kg |
+
+The books lent hardly move: halving the trip and halving the share (50 to 25 %) nearly cancel.

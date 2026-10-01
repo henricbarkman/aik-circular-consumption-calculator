@@ -21,6 +21,7 @@ const WORDS = {
   tv: ['=tv', '=tvar', '=tvn', '=teve', 'tvapparat', 'tvapparater'],
   borr: ['=borr', 'slagborr', 'slagborrar', 'borrmaskin', 'borrmaskiner', 'skruvdragare', 'borrskruvdragare'],
   skidor: ['skida', 'skidor'],
+  skridskor: ['skridsko', 'skridskor'],
   cyklar: ['cykel', 'cyklar'],
   elcyklar: ['elcykel', 'elcyklar'],
   bocker: ['bok', 'böcker', 'pocket', 'pocketar'],
@@ -28,7 +29,7 @@ const WORDS = {
 };
 
 // Real words that end like a product type but are something else.
-const NOT = new Set(['motorcykel', 'motorcyklar', 'elsparkcykel', 'elsparkcyklar', 'sparkcykel', 'sparkcyklar', 'motionscykel', 'motionscyklar', 'disko', 'snömobil', 'snömobiler', 'lastpall', 'lastpallar']);
+const NOT = new Set(['motorcykel', 'motorcyklar', 'elsparkcykel', 'elsparkcyklar', 'sparkcykel', 'sparkcyklar', 'motionscykel', 'motionscyklar', 'disko', 'snömobil', 'snömobiler', 'lastpall', 'lastpallar', 'rullskridsko', 'rullskridskor']);
 
 // A line that adds up the others. Shown as such, so it is never mistaken for a
 // product type the tool lacks.

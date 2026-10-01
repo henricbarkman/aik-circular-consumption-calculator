@@ -32,26 +32,90 @@ const UBA_2016 = { title: 'Einfluss der Nutzungsdauer von Produkten auf ihre Umw
 // Uses per owned bike, worked out from national totals.
 const NV_ELCYKEL = { title: 'Elcykling, vem, hur och varför?', org: 'Naturvårdsverket', year: 2019, url: 'https://www.naturvardsverket.se/globalassets/media/publikationer-pdf/6800/978-91-620-6894-3.pdf' };
 const BIKE_SALES = { title: 'Antal sålda cyklar och elcyklar', org: 'Svensk Cykling, i Miljöbarometern', year: 2017, url: 'https://2030.miljobarometern.se/nationella-indikatorer/bilen/antal-salda-cyklar-och-elcyklar-b1l/table/' };
+const SCHIBSTED_2023 = { title: 'The Second Hand Effect Report', org: 'Schibsted', year: 2023, url: 'https://assets.ctfassets.net/9qowtvvo5be7/77HjGUIilek5wIlvIeGkhg/df89f84ef9549d595ca0521a01db97d2/Public_Schibsted-The-Second-Hand-Effect-Report-2023_14-june2024.pdf' };
+const JOHNSON_PLEPYS = { title: 'Product-Service Systems and Sustainability: Analysing the Environmental Impacts of Rental Clothing', org: 'Johnson och Plepys, Lunds universitet, Sustainability', year: 2021, url: 'https://doi.org/10.3390/su13042118' };
+const KAU_2023 = { title: 'Fritidsbankens betydelse för barns och ungas idrott och fritid', org: 'Karlstads universitet', year: 2023, url: 'https://www.fritidsbanken.se/wp-content/uploads/2023/04/Presentation-fritidsbanker-24-april-2023.pdf' };
+const CICERO_2021 = { title: 'Bærekraftig deling i norske kommuner: status og nye muligheter', org: 'CICERO, Julsrud', year: 2021, url: 'https://hdl.handle.net/11250/2737245' };
+const VESTBLAD = { title: 'Cirkulerande återanvändning av sportartiklar', org: 'Vestblad, Karlstads universitet', year: 2016, url: 'https://kau.diva-portal.org/smash/get/diva2:940899/FULLTEXT01.pdf' };
+
+// Share of circulations that replace a new purchase, one per method. Henric
+// 2026-10-01: renting and lending are asked differently and answer differently,
+// so they are separate methods again. Research: docs/research-factors-2026-09-30.md, section 7.
+const SHARE_SECONDHAND = {
+  value: 50,
+  kind: 'source',
+  sources: [
+    SCHIBSTED_2023,
+    { title: 'The Second-hand Effect Report 2025', org: 'Vend', year: 2025, url: 'https://via.tt.se/files/3235399/4570156/434939/sv' },
+  ],
+  note: '50 procent är Blockets mätning 2023: hälften av köpen ersatte ett nyköp. För möbler och hem var det 41 procent. I mätningen 2025 var snittet 40 procent (s. 16), med en något ändrad fråga.',
+  why: 'Alla second hand-köp ersätter inte ett nyköp. Något är billigare och köps därför i onödan, något hade aldrig köpts alls.',
+};
+const SHARE_RENT = {
+  value: 50,
+  kind: 'assumption',
+  why: 'Hälften, som för second hand, eftersom mätningarna för uthyrning spretar. Hos en uthyrare av festklänningar i Stockholm sa kunderna att 70 procent av hyrorna ersatte ett köp, men företagets egna siffror gav 33 procent (Johnson och Plepys 2021, 57 svar). Library of Things i London, som hyr ut verktyg och apparater per dag, räknade med 25 procent och höjde till 50 procent 2024 efter en ny enkät, utan att redovisa hur den gjordes. Svenska studier av uthyrning mellan privatpersoner antar 25 till 50 procent (Martin m.fl. 2019).',
+};
+const SHARE_BORROW = {
+  value: 25,
+  kind: 'source',
+  sources: [KAU_2023, RISE_FRITIDSBANKEN, CICERO_2021],
+  note: 'Mätt bland dem som lånar gratis. I en enkät 2022 bland 427 unga låntagare på 52 fritidsbanker sa 25 procent att de annars hade köpt utrustningen, och 48 procent att de hade låtit bli aktiviteten (Karlstads universitet, bild 14). I RISE utvärdering av Fritidsbanken svarade 30 procent att de annars hade köpt (s. 22). I Norge svarade ungefär 83 personer som lånat gratis att de annars hade köpt nytt (23 procent), köpt begagnat (29), lånat av någon de känner (33), hyrt någon annanstans (11) eller låtit bli (34), med flera svar möjliga (CICERO 2021, tabell 3.12). Bara den norska frågan skiljer på nytt och begagnat.',
+};
+const SHARE_ONSITE = {
+  value: 25,
+  kind: 'assumption',
+  why: 'Ingen har mätt hur ofta ett lån på plats ersätter ett köp. Samma andel som för lån att ta med hem används (Karlstads universitet 2023, RISE 2020). En skridskodag med skolan ersätter troligen fler köp än en prova på-dag, där många aldrig hade köpt något alls.',
+};
 
 export const METHODS = {
   secondhand: {
     id: 'secondhand',
     label: 'köpts second hand',
+    replacementShare: SHARE_SECONDHAND,
     tripsPerCirculation: {
       value: 2,
       kind: 'assumption',
       why: 'En resa dit och en hem. Den som köper second hand gör en tur och retur per köp.',
     },
   },
-  // Renting and borrowing count the same way: fetch, use, return. One method,
-  // so the sentence does not offer two choices that give the same answer.
+  // Renting and lending were one method from 2026-09-30 to 2026-10-01. The id
+  // stays 'rent', so old links with hur=rent keep the share they had.
   rent: {
     id: 'rent',
-    label: 'hyrts eller lånats',
+    label: 'hyrts ut',
+    loan: true,
+    replacementShare: SHARE_RENT,
     tripsPerCirculation: {
       value: 4,
       kind: 'assumption',
       why: 'Två turer och returer: en för att hämta, en för att lämna tillbaka.',
+    },
+  },
+  borrow: {
+    id: 'borrow',
+    label: 'lånats ut',
+    loan: true,
+    // Books lent are lent by a library, which people live close to.
+    libraryCarShare: true,
+    replacementShare: SHARE_BORROW,
+    tripsPerCirculation: {
+      value: 4,
+      kind: 'assumption',
+      why: 'Två turer och returer: en för att hämta, en för att lämna tillbaka.',
+    },
+  },
+  // Loans used where they are lent: skates at the rink, life jackets at the
+  // beach, Fritidsbanken's snabblån and school loans.
+  onsite: {
+    id: 'onsite',
+    label: 'lånats ut på plats',
+    loan: true,
+    replacementShare: SHARE_ONSITE,
+    tripsPerCirculation: {
+      value: 0,
+      kind: 'assumption',
+      why: 'Den som lånar på plats är redan där, på isbanan, stranden eller skolans idrottsdag. Lånet ger ingen extra resa.',
     },
   },
   // Research and the choice of shares: docs/research-repair-2026-09-30.md.
@@ -273,6 +337,25 @@ export const CATEGORIES = [
     spread: 'Bara två källor finns, och ADEME:s lägre värde säger inte vad det gäller.',
   },
   {
+    // Henric 2026-10-01: skates were his example of a loan used on the spot. No
+    // source measures a whole skate, so the value is a lower bound and says so.
+    id: 'skridskor', plural: 'par skridskor', singular: 'ett nytt par skridskor',
+    lca: {
+      value: 11.8, low: 11.8, high: 20, kind: 'source',
+      typical: 'Bara materialen i ett par hockeyskridskor för vuxna, storlek 43/44. Det är en undre gräns.',
+      sources: [VESTBLAD, RISE_FRITIDSBANKEN],
+      note: 'Materialen i ett par, plast 0,40 kg, stål 0,27 kg, läder 0,53 kg och nylon 0,61 kg, ger 11,8 kg koldioxid när de framställs (uträknat ur Vestblad, tabell 2 och 5). Själva tillverkningen av skridskorna, förpackningen och frakten saknas, så det verkliga värdet är högre. För skidor ger samma studie 17,2 kg för materialen, mot 29 kg för hela tillverkningen enligt RISE (s. 21). Samma skillnad ger skridskorna ungefär 20 kg, spannets övre ände. Ingen källa har mätt ett helt par skridskor.',
+    },
+    itemsPerTrip: perVisit(1, 'Ett par skridskor per besök.'),
+    loansPerPurchase: {
+      value: 9, kind: 'assumption',
+      why: 'Samma tal som för skidor, där ett par egna används 7,5 till 10 gånger (RISE 2020, s. 22). Ingen källa mäter hur ofta egna skridskor används. Ett barn som växer ur sina skridskor efter en eller två gånger använder dem mycket mindre: sänk då talet.',
+    },
+    repairShare: REPAIR_SHARE_OTHER,
+    repairKg: repairSmall('skridskor', ' Att slipa skridskor kräver inga reservdelar alls.'),
+    spread: 'Bara en källa finns, och den räknar bara materialen.',
+  },
+  {
     id: 'cyklar', plural: 'cyklar', singular: 'en ny cykel',
     lca: {
       low: 96, high: 150, kind: 'source',
@@ -354,24 +437,33 @@ for (const c of CATEGORIES) {
 }
 
 export const SHARED = {
-  replacementShare: {
+  // Second hand's share, and the fallback for a method without its own.
+  replacementShare: SHARE_SECONDHAND,
+  // Henric 2026-10-01: measured for errands and shopping, replacing the 75 % assumption.
+  carShare: {
+    value: 68,
+    kind: 'source',
+    sources: [{ title: 'Resvanor i Sverige 2024 (Statistik 2025:17)', org: 'Trafikanalys', year: 2025, url: 'https://www.trafa.se/globalassets/statistik/resvanor/2025/resvanor-i-sverige-2024.xlsx' }],
+    note: 'Resor för service och inköp i Sverige 2024: 363 730 av 536 748 tusen gjordes med bil som huvudsakligt färdsätt, 68 procent (tabell 1). RISE mätte 72 procent bil till Fritidsbanken 2020, och Mistra Future Fashion räknade med 50 procent för klädköp 2019.',
+  },
+  // Henric 2026-10-01: about half of the trips are made only for the visit and
+  // count in full; the rest go with errands that would happen anyway and count
+  // nothing. Multiplies both the trips charged and the shop trips credited.
+  tripShare: {
     value: 50,
     kind: 'source',
-    sources: [
-      { title: 'The Second Hand Effect Report', org: 'Schibsted', year: 2023, url: 'https://assets.ctfassets.net/9qowtvvo5be7/77HjGUIilek5wIlvIeGkhg/df89f84ef9549d595ca0521a01db97d2/Public_Schibsted-The-Second-Hand-Effect-Report-2023_14-june2024.pdf' },
-      { title: 'The Second-hand Effect Report 2025', org: 'Vend', year: 2025, url: 'https://via.tt.se/files/3235399/4570156/434939/sv' },
-      RISE_FRITIDSBANKEN,
-      { title: 'Fritidsbankens betydelse för barns och ungas idrott och fritid', org: 'Karlstads universitet', year: 2023, url: 'https://www.fritidsbanken.se/wp-content/uploads/2023/04/Presentation-fritidsbanker-24-april-2023.pdf' },
-    ],
-    note: '50 procent är Blockets mätning 2023: hälften av köpen ersatte ett nyköp. För möbler och hem var det 41 procent. I mätningen 2025 var snittet 40 procent (s. 16), med en något ändrad fråga. För gratis utlåning är det lägre. RISE räknade med att hälften av sakerna i Fritidsbankens utlåning ersatte ett nyköp och kallade det ett bästa fall, men bara 30 procent av låntagarna sa att de annars hade köpt (s. 22). I en enkät 2022 bland 427 unga låntagare på 52 fritidsbanker var det 25 procent, och 48 procent hade låtit bli aktiviteten (Karlstads universitet, bild 14). Ingen av dem frågade om köpet hade varit nytt.',
-    why: 'Alla second hand-köp, lån och hyror ersätter inte ett nyköp. Något är billigare och köps därför i onödan, något hade aldrig köpts alls.',
+    sources: [SCHIBSTED_2023, JOHNSON_PLEPYS, RISE_FRITIDSBANKEN],
+    note: 'Ungefär hälften av resorna görs bara för besöket och räknas fullt. Resten görs ihop med ärenden som hade blivit av ändå och räknas inte. Bland svenskar som hämtar något de köpt begagnat åker 52 procent bara för det (Schibsted 2023, s. 17). Hos en uthyrare av festklänningar i Stockholm gjorde 45 procent resan bara för hyran och 55 procent kombinerade den med annat (Johnson och Plepys 2021, s. 10). RISE räknade hälften av bilkörningen till Fritidsbanken på lånet, som ett antagande (2020, s. 23). Att en kombinerad resa inte ger något alls är en förenkling: en omväg kan ge några kilometer.',
   },
-  carShare: {
-    value: 75,
+  // Items fetched per visit for the whole list. null leaves each product type
+  // with its own items per visit; the page offers it only for a list.
+  itemsPerVisitList: {
+    value: null,
     kind: 'assumption',
-    why: 'Metodens utgångsläge när ni inte vet hur era besökare tar sig dit. RISE räknade med 72 procent bil för Fritidsbanken 2020, Mistra Future Fashion med 50 procent för klädköp 2019.',
+    why: 'Utgångsläget räknar besöken för varje sort för sig, med sortens eget tal per besök. Hämtar besökarna flera sorter vid samma besök, som skidor, pjäxor och stavar, räknas samma besök då flera gånger. Skriv i så fall hur många föremål ett besök brukar gälla, så räknas besöken för hela listan med det talet.',
   },
-  // Used when books are all that is borrowed: a library, which people live close to.
+  // Used when the method is lending and books are all that is lent: a library,
+  // which people live close to.
   carShareLibrary: {
     value: 38,
     kind: 'source',

@@ -16,7 +16,13 @@
 //
 // Several product types share one set of assumptions about trips and shares;
 // only the emissions per new item and the items per visit differ per row. Trips
-// are counted as visits, so four chairs fetched together are one trip.
+// are counted as visits, so four chairs fetched together are one trip. A list
+// can instead say how many items one visit fetches across all its rows, for
+// skis and ski boots borrowed together (Henric 2026-10-01).
+//
+// Only part of each trip is charged to the visit: about half of trips are made
+// for the visit alone, the rest go with errands that would happen anyway
+// (Henric 2026-10-01). The same part applies to the shop trips credited.
 
 // A repair adds one more cost: the spare parts and material, charged to every
 // repaired item, because they are new material that buying new would not add.
@@ -32,27 +38,35 @@
  * @param {number} p.replacementPct   share that replaces a new purchase, 0-100
  * @param {boolean} p.transportOn
  * @param {number} p.carPct           share of visits made by car, 0-100
+ * @param {number} [p.tripPct]        share of each trip charged to the visit, 0-100, default 100
  * @param {number} p.trips            one-way trips per visit
  * @param {number} [p.newTrips]       one-way trips a new purchase would have taken, default 2
  * @param {number} p.km               km per one-way trip
  * @param {number} p.carEf            kg CO2e per vehicle-km
+ * @param {number|null} [p.itemsPerVisit] items one visit fetches across the whole list;
+ *   when set it replaces every row's itemsPerTrip
  * @param {boolean} p.opsOn
  * @param {number} p.opEf             kg CO2e per circulated item
  */
 export function calculate(p) {
-  const perTrip = (trips) => (p.carPct / 100) * trips * p.km * p.carEf;
+  const share = (p.tripPct ?? 100) / 100;
+  const perTrip = (trips) => (p.carPct / 100) * share * trips * p.km * p.carEf;
   const perTripKg = perTrip(p.trips);
   // A visit here that takes fewer trips than a shop visit offsets only its own,
   // so the trips never come out below zero.
   const shopTrips = Math.min(p.trips, p.newTrips ?? 2);
   const perShopKg = perTrip(shopTrips);
+  const listPer = p.itemsPerVisit ?? null;
 
   const rows = p.rows.map((row) => {
     const replacing = row.count * ((row.replacementPct ?? p.replacementPct) / 100);
     const purchasesAvoided = replacing / (row.loansPerPurchase ?? 1);
-    const perVisit = row.itemsPerTrip > 0 ? 1 / row.itemsPerTrip : 0;
+    const per = listPer ?? row.itemsPerTrip;
+    const perVisit = per > 0 ? 1 / per : 0;
     return {
       ...row,
+      // The items per visit this row was counted with: its own, or the list's.
+      perVisitUsed: per,
       potential: row.count * row.lca,
       replacing,
       purchasesAvoided,
@@ -87,6 +101,9 @@ export function calculate(p) {
     notReplacingLost: potential - avoided,
     visits,
     shopVisits,
+    itemsPerVisit: listPer,
+    // Per visit if the whole trip were charged, before the share above.
+    perTripFullKg: (p.carPct / 100) * p.trips * p.km * p.carEf,
     perTripKg,
     shopTrips,
     perShopKg,
