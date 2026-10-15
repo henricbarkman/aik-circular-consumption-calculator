@@ -1,5 +1,13 @@
 # PROGRESS — CCC, Circular Consumption Calculator
 
+## 2026-10-16 (inbäddning, natt)
+- Henric (kort HENRIC-3498): "Gör färdigt CCC och ge till Bertil och SK". Bertil = Bertil Ahlin, Arvika kommun; SK = Smarta Kartan, Vasco Keppel Hesselink på Kollaborativ ekonomi Göteborg.
+- Demi: inbäddningsläge. `?inbaddad=1` döljer sidhuvud, sidfot, källtabell och metodavsnitt och visar en rad med länk till samma uträkning på hela sidan; uträkningen, stegen och de ändringsbara talen står kvar. Kopierade länkar pekar på hela sidan. iframe-raden står i README under "Embed it". Provat i en iframe på en värdsida och på 420 px bredd, granskat (inga fynd), publicerat.
+- Fynd vid publiceringen: första hämtningen av den nya `state.js?v=…` en minut efter `wrangler pages deploy` gav den gamla filen, medan HTML:en redan var ny. Sidan kraschade i den webbläsaren, och webbläsaren sparar filen i fyra timmar. Någon minut senare gav samma adress rätt fil. Stämpeln skyddar alltså inte mot att Pages inte hunnit sprida filerna. Inte åtgärdat; se Nästa.
+- `feature/webapp` mergad till `main`, så att GitHub-länken i sidfoten visar koden.
+- → Väntar på Henric: licens (README säger "To be decided", sidan säger "öppen kod"), och om något av besluten nedan ska ändras innan Bertil och Vasco får länken.
+- → Nästa: `bin/deploy.sh` ska vänta tills varje stämplad fil på ccc.henricbarkman.se har det nya innehållet innan den säger klart (eller publicera filerna före HTML:en). Sedan engelska, och den norska skidlånestudien om Henric laddar upp den.
+
 ## 2026-10-01 (hyrt, lånat, på plats)
 - Henric: dela upp hyrt och lånat igen och lägg till lån på plats. Hälften av resan räknas på besöket. Bilandel 68 % ur resvaneundersökningen. Föremål per besök för hela listan. Snabblånen ska räknas. Ingen barnkategori; skridskor om det går att säga ärligt.
 - Demi: fem sätt i meningen: köpts second hand 50 %, hyrts ut 50 % (antagande), lånats ut 25 % (Karlstads universitet, RISE, CICERO), lånats ut på plats 25 % utan resor, lagats. Nytt steg "Andel av resan som räknas på besöket", 50 % (Schibsted 2023, Johnson och Plepys 2021, RISE 2020), som också gäller butiksresorna som dras av. Bil 68 % (Trafikanalys 2025). Föremål per besök för hela listan när listan har flera sorter; stegen säger när det gäller i stället för sortens eget tal. Snabblån och skollån räknas som lån på plats. Skridskor 11,8 kg som undre gräns (Vestblad 2016). Utredningen i `docs/research-factors-2026-09-30.md`, avsnitt 7; besluten i README.
