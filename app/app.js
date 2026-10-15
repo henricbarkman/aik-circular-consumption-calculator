@@ -3,7 +3,7 @@
 import { CATEGORIES, METHODS, SHARED } from './factors.js?v=dev';
 import { calculate, breakEvenCarPct, visitWeightedCarPct, num, mass, massRange } from './calc.js?v=dev';
 import { parseList, decodeList, templateCsv } from './list.js?v=dev';
-import { listPerVisit as listPerVisitOf, pruneOverrides as pruneTyped, methodFromLink } from './state.js?v=dev';
+import { listPerVisit as listPerVisitOf, pruneOverrides as pruneTyped, methodFromLink, embedFromLink } from './state.js?v=dev';
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
@@ -223,8 +223,13 @@ function readUrl() {
 // Number to text without exponent: String(1e-8) is "1e-8", which readUrl refuses.
 const plain = (v) => (Number.isInteger(v) ? String(v) : v.toFixed(12).replace(/\.?0+$/, ''));
 
-function linkForState() {
+// Embedded on another site (inbaddad=1). Only the address bar keeps the flag, so
+// a reload stays embedded; copied links and the link to the full page drop it.
+const embedded = embedFromLink(location.search);
+
+function linkForState({ embed = false } = {}) {
   const q = new URLSearchParams({ rader: counted().map((r) => `${r.category}.${r.count}`).join(','), hur: state.method });
+  if (embed) q.set('inbaddad', '1');
   if (!state.transportOn) q.set('resor_med', '0');
   if (!state.opsOn) q.set('drift_med', '0');
   for (const [key, v] of Object.entries(state.overrides)) {
@@ -539,7 +544,8 @@ function render() {
   $('method-note').hidden = !isLoan();
   $('method-note').textContent = methodNote();
   // The address bar always holds the calculation on screen, without piling up history.
-  history.replaceState(null, '', linkForState());
+  history.replaceState(null, '', linkForState({ embed: embedded }));
+  if (embedded) $('embed-full').href = linkForState();
 }
 
 // What to count, under the sentence, for the three loan methods. Loans used on

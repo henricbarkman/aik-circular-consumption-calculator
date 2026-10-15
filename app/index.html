@@ -19,6 +19,11 @@
       var c = document.documentElement.classList;
       if (c.contains('is-pending')) c.add('is-broken');
     });
+    // Embedded on another site (?inbaddad=1, the rule in state.js): set before
+    // the page is drawn, so the parts an embed leaves out never flash.
+    if (new URLSearchParams(location.search).get('inbaddad') === '1') {
+      document.documentElement.classList.add('is-embed');
+    }
   </script>
 </head>
 <body>
@@ -79,6 +84,12 @@
       </div>
       <ol class="step-list" id="steps"></ol>
     </section>
+    </div>
+
+    <div class="wrap embed-more needs-calc">
+      <p>Källorna till varje tal, metoden och det uträkningen inte räknar med finns på
+      <a id="embed-full" href="https://ccc.henricbarkman.se/" target="_blank" rel="noopener">ccc.henricbarkman.se</a>.
+      CCC är byggd av Henric Barkman.</p>
     </div>
 
     <section class="wrap sources needs-calc" aria-labelledby="src-h">

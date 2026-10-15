@@ -461,6 +461,27 @@ footer.site p + p { margin-top: 0.5rem; }
 .stickysum b { font-family: var(--font-display); font-size: 1.35rem; color: var(--mint); white-space: nowrap; }
 .stickysum span { font-size: 0.9rem; color: #B9C4C8; }
 
+/* ---------- Embedded on another site (?inbaddad=1) ---------- */
+
+/* The host page has its own header and footer. The calculation, its steps and
+   the answer stay; sources and method are one click away on the full page. */
+.embed-more { display: none; }
+.is-embed .topline,
+.is-embed .sources,
+.is-embed .method,
+.is-embed footer.site { display: none; }
+.is-embed .workspace { padding-top: clamp(1.25rem, 4vh, 2.5rem); }
+.is-embed .embed-more {
+  display: block;
+  margin-top: clamp(2.5rem, 6vh, 4rem);
+  padding-top: 1.5rem;
+  padding-bottom: 5.5rem; /* room for the sticky net line */
+  border-top: 1px solid #E6E3EC;
+  font-size: 0.92rem;
+  color: var(--ink-light);
+}
+.embed-more p { max-width: var(--measure); }
+
 .toast {
   position: fixed; left: 50%; bottom: 5rem; z-index: 30;
   transform: translateX(-50%);

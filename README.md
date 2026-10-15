@@ -12,6 +12,19 @@ cd app && python3 -m http.server 8765
 
 Tests: `node --test tests/*.test.mjs`
 
+## Embed it
+
+Add `inbaddad=1` to any link and the page fits inside another site: no site header or footer, no sources table or method section, and a line at the bottom that opens the same calculation on the full page, where the sources are. The calculation, every step and the editable numbers stay.
+
+```html
+<iframe src="https://ccc.henricbarkman.se/?inbaddad=1&rader=klader.1200&hur=secondhand"
+        title="CCC, klimatnyttan av cirkulär konsumtion"
+        width="100%" height="900" style="border:0"
+        allow="clipboard-write" loading="lazy"></iframe>
+```
+
+`rader` and `hur` set what the calculator opens with (any link copied from the page works, add `inbaddad=1` to it). Give the frame a fixed height and let it scroll: on a wide frame the answer then stays in view beside the steps, as on the full page. `allow="clipboard-write"` lets the copy buttons work inside the frame. Links copied from an embedded page point to the full page.
+
 ## Method in brief
 
 For each product type, a number of circulated items N and the emissions of one new item (a typical value per type; the low and high ends of the sources' span are shown beside the result, not used as the headline):

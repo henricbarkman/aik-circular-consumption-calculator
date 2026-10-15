@@ -33,6 +33,17 @@ export function pruneOverrides(rows, overrides) {
 }
 
 /**
+ * Whether the link opens the page to sit inside another site's page
+ * (inbaddad=1): no site header, footer, sources or method section, and a link
+ * to the full page instead. The inline script in index.html applies the same
+ * rule before the page is drawn, so the hidden parts never flash.
+ * @param {string} search  location.search
+ */
+export function embedFromLink(search) {
+  return new URLSearchParams(search).get('inbaddad') === '1';
+}
+
+/**
  * The method a link's hur= names, or the current one when it names none. From
  * 2026-09-30 to 2026-10-01 hur=borrow opened the merged "hyrts eller lånats";
  * it is lending again, and hur=rent is renting with the share it had.

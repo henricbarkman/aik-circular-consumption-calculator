@@ -1,7 +1,7 @@
 // The page's rules for typed values and links, run without a page.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { listPerVisit, pruneOverrides, methodFromLink } from '../app/state.js';
+import { listPerVisit, pruneOverrides, methodFromLink, embedFromLink } from '../app/state.js';
 import { METHODS } from '../app/factors.js';
 
 test('items per visit for the whole list applies only to two or more counted types', () => {
@@ -40,4 +40,22 @@ test('hur= in a link: rent keeps 50 %, borrow opens lending at 25 %, anything el
   for (const how of [null, '', 'lånat', 'hyrt', 'toString', '__proto__', 'constructor']) {
     assert.equal(methodFromLink(how, METHODS, 'secondhand'), 'secondhand', String(how));
   }
+});
+
+test('only inbaddad=1 opens the embedded page', () => {
+  assert.equal(embedFromLink('?inbaddad=1&rader=skidor.500&hur=borrow'), true);
+  assert.equal(embedFromLink('?rader=skidor.500&inbaddad=1'), true);
+  assert.equal(embedFromLink('?rader=skidor.500'), false);
+  assert.equal(embedFromLink(''), false);
+  // Any other value is the full page, so a typo never hides the sources.
+  assert.equal(embedFromLink('?inbaddad=0'), false);
+  assert.equal(embedFromLink('?inbaddad=ja'), false);
+  assert.equal(embedFromLink('?inbaddad'), false);
+});
+
+test('the inline script in index.html uses the same rule as embedFromLink', async () => {
+  // The page sets the class before app.js loads, so the two must not drift.
+  const { readFile } = await import('node:fs/promises');
+  const html = await readFile(new URL('../app/index.html', import.meta.url), 'utf8');
+  assert.match(html, /new URLSearchParams\(location\.search\)\.get\('inbaddad'\) === '1'/);
 });
