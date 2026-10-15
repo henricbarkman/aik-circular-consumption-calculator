@@ -1,0 +1,61 @@
+# PROGRESS — CCC, Circular Consumption Calculator
+
+## 2026-10-16 (inbäddning, natt)
+- Henric (kort HENRIC-3498): "Gör färdigt CCC och ge till Bertil och SK". Bertil = Bertil Ahlin, Arvika kommun; SK = Smarta Kartan, Vasco Keppel Hesselink på Kollaborativ ekonomi Göteborg.
+- Demi: inbäddningsläge. `?inbaddad=1` döljer sidhuvud, sidfot, källtabell och metodavsnitt och visar en rad med länk till samma uträkning på hela sidan; uträkningen, stegen och de ändringsbara talen står kvar. Kopierade länkar pekar på hela sidan. iframe-raden står i README under "Embed it". Provat i en iframe på en värdsida och på 420 px bredd, granskat (inga fynd), publicerat.
+- Fynd vid publiceringen: första hämtningen av den nya `state.js?v=…` en minut efter `wrangler pages deploy` gav den gamla filen, medan HTML:en redan var ny. Sidan kraschade i den webbläsaren, och webbläsaren sparar filen i fyra timmar. Någon minut senare gav samma adress rätt fil. Stämpeln skyddar alltså inte mot att Pages inte hunnit sprida filerna. Inte åtgärdat; se Nästa.
+- `feature/webapp` mergad till `main`, så att GitHub-länken i sidfoten visar koden.
+- → Väntar på Henric: licens (README säger "To be decided", sidan säger "öppen kod"), och om något av besluten nedan ska ändras innan Bertil och Vasco får länken.
+- → Nästa: `bin/deploy.sh` ska vänta tills varje stämplad fil på ccc.henricbarkman.se har det nya innehållet innan den säger klart (eller publicera filerna före HTML:en). Sedan engelska, och den norska skidlånestudien om Henric laddar upp den.
+
+## 2026-10-01 (hyrt, lånat, på plats)
+- Henric: dela upp hyrt och lånat igen och lägg till lån på plats. Hälften av resan räknas på besöket. Bilandel 68 % ur resvaneundersökningen. Föremål per besök för hela listan. Snabblånen ska räknas. Ingen barnkategori; skridskor om det går att säga ärligt.
+- Demi: fem sätt i meningen: köpts second hand 50 %, hyrts ut 50 % (antagande), lånats ut 25 % (Karlstads universitet, RISE, CICERO), lånats ut på plats 25 % utan resor, lagats. Nytt steg "Andel av resan som räknas på besöket", 50 % (Schibsted 2023, Johnson och Plepys 2021, RISE 2020), som också gäller butiksresorna som dras av. Bil 68 % (Trafikanalys 2025). Föremål per besök för hela listan när listan har flera sorter; stegen säger när det gäller i stället för sortens eget tal. Snabblån och skollån räknas som lån på plats. Skridskor 11,8 kg som undre gräns (Vestblad 2016). Utredningen i `docs/research-factors-2026-09-30.md`, avsnitt 7; besluten i README.
+- Talen: ett skidlån −2,10 → −1,03 kg; familj som hade köpt +8,83; hyrt −0,20; på plats +0,56. Startsidan 4,8 → 5,1 ton. 1 000 begagnade böcker −143 → +20 kg; 1 000 lånade böcker −297 → −311 kg.
+- → Nästa: läs den norska skidlånestudien (J. Cleaner Production 2025) om Henric laddar upp den; sedan inbäddning för Arvika och Smarta Kartan.
+
+## 2026-09-30 (lån)
+- Henric: böcker ja, men biblioteken ligger nära så bilandelen är lägre. Ett lån räknas som en del av ett nyköp: "ett lån ersätter 1 åttondels nyköp", kanske närmare en sjättedel. Kolla Fritidsbankens rapporter om hur mycket ett lån ersätter.
+- Demi: ett lån ersätter 1/L av ett nyköp, med L per sort ur källor (skidor 9 enligt RISE, inte 6: egna skidor används 7,5 till 10 gånger). Böcker 0,56 kg (Bokbranschens klimatinitiativ 2025), bilandel 38 % till biblioteket (Novus 2018), viktat efter besök när listan blandar böcker och annat. Korta lån blir minus med utgångsvärdena; sidan visar vid vilken bilandel det vänder. Granskad: den viktade bilandelen, texten när det blir minus och spannet med egna värden rättade. Provat i Firefox och Chromium.
+- Fritidsbanken: skidornas 1/9 stöds (1,7 lån per par och år). Låntagarna själva säger 25 % (n = 427, Karlstads universitet 2023) och 30 % (RISE 2020) att de annars hade köpt, mot 50 % i verktyget. Står i källtexten; värdet oändrat.
+- → Väntar på Henric: ska andelen för lån sänkas från 50 % till 30 %?
+- → Sedan: föremål per besök.
+
+## 2026-09-30 (granskning)
+- Henric: kör flera granskare, kod, användare, metod och klimatfaktorerna. Alla delar ska vara tipp topp.
+- Demi: fem granskare (kod, användare, metod, faktorer i två delar). Rättat:
+  - Metod: hyrt, lånat och lagat betalar nu resorna utöver ett butiksbesök även för den del som ersätter ett nyköp (loggat i README). Texterna om lagningsandelen, driften och vad som inte räknas stämmer nu med källorna.
+  - Faktorer: kläder 5,2–23,2 kg (ADEME, råvara till butik) i stället för Mistras hela livet; mobiler 55 kg (IVL), datorer 182 kg (ADEME/Arcep 2025) med 89 kg som lägst; tv 328 kg; skidor 29 kg (RISE); köksapparater 36,6 kg; bord 60,1–80,2 kg; elcyklar som egen sort. Lagning av datorer och tv har källsatta värden. ADEME-källorna har rätt årtal.
+  - Användare: "+ fler" hittar inte på ett antal, summarader och okända sorter förklaras, redigeringsrutan och skärmläsare fungerar bättre, förklaring av koldioxidekvivalenter.
+  - Kod: publiceringsskriptet stoppar varje ostämplad filadress.
+- → Väntar på Henric: böcker (svensk källa 0,53 kg gör böcker negativa med standardresorna) och om ett lån ska räknas som ett halvt nyköp (RISE räknar per sak i utlåningen, inte per lån).
+- → Sedan: föremål per besök.
+
+## 2026-09-30 (natt)
+- Henric: kan CCC inte läsa Excel direkt? Lånat och hyrt ger samma resultat, en kategori. Saknar lagat.
+- Demi: Excel (.xlsx, .xls) och .ods läses direkt i webbläsaren; läsaren laddas bara när ett kalkylark väljs, och rapporten säger vilket blad som lästes. Hyrt och lånat är ett sätt, "hyrts eller lånats"; gamla länkar med lånat fungerar. Provat i Firefox och Chrome.
+- Henric (senare): 82 % för lagning av kläder är rimligt.
+- Demi: "lagats" som tredje sätt. Andelen som ersätter ett nyköp sätts per sort: 82 % för kläder (WRAP 2025, IVL), 50 % för resten. Själva lagningen blir ett eget steg: reservdelar och material räknas för varje lagad sak (0,1 kg per plagg, 3 kg per mobil, 0,2 kg som antagande där källa saknas). Beslutet står under Method decisions i README. Utredningen finns i `docs/research-repair-2026-09-30.md`.
+- → Nästa: föremål per besök (för lagning har Privett mätt 1,4 per besök på reparationskaféer).
+
+## 2026-09-30 (sen kväll)
+- Henric: knappen "Lägg till en sorts produkt" gick inte att trycka på, och rubrikerna syntes utan uträkning. Ja till att kunna ladda upp en lista.
+- Demi: orsaken var cache, inte knappen. Domänen henricbarkman.se låter webbläsare spara .js i fyra timmar medan HTML alltid hämtas färsk, så ny HTML körde gammal JS och kraschade. `bin/deploy.sh` stämplar nu varje filadress med ett fingeravtryck, och allt som bygger på uträkningen är dolt tills den finns. Knappen är nu ett tomt fält i meningen ("+ fler"). Listinläsning (CSV, mall att hämta), där varje rad visas med vad den räknades som. Granskad, fem tysta tapp rättade. Publicerad och provad i Firefox och Chrome.
+- → Nästa: utred föremål per besök. Fler sorter i verktyget om listorna visar vad butikerna faktiskt har (lampor, leksaker, husgeråd).
+
+## 2026-09-30 (kväll)
+- Henric: spannet i rubriken blir tokigt, utgå från ett mittenvärde (~10 kg per plagg) om användaren inte vet mer. Hur gör man med flera sorters produkter? Listan såg knäpp ut när den öppnades.
+- Demi: ett typiskt värde per kategori (kläder 9 kg enligt Myrorna/Erikshjälpen, annars mitten av källans spann), spannet som en rad under resultatet. Meningen tar flera sorters produkter; resor räknas som besök per sort. Rättade listans upprepade pil och jättestora alternativ. Granskad, ett decimalfel i redigeringsrutorna rättat. Publicerad.
+- → Nästa: utred föremål per besök. Uppladdning av en lista (CSV) för butiker med många sorter, om rad-för-rad blir för trögt.
+
+## 2026-09-30 (eftermiddag)
+- Henric: namnet CCC på ccc.henricbarkman.se, inget om Swinga, 50 % och 0,17 gäller. Prototypen kändes för mobilanpassad, den används mest på dator.
+- Demi: datorlayout med resultatet i en fast panel bredvid frågan och stegen. Adversariell granskning: länkparametrar gick att få att krascha sidan eller ge fel resultat, avrundning dolde värdet som räknades; allt rättat och provat i webbläsare. Drift för annat än kläder märkt som antagande. Publicerad på Cloudflare Pages.
+- → Nästa: utred antagandena om föremål per besök (Henric: "nästa steg"). Sedan inbäddningsläge för Arvika och Smarta Kartan, engelska, CSV-uppladdning.
+
+## 2026-09-30
+- Demi: utredde swinga.coop/calculator (AgentiveHub-skriptet 404, GPT-länken har 0 i stället för O). Ingen gammal kod finns.
+- Henric: bygg nytt från formlerna, under henricbarkman.se, hans egen stil, transparent uträkning.
+- Demi: statisk prototyp i `app/` (ingen byggprocess) på `feature/webapp`. Alla tal källsatta (`docs/research-factors-2026-09-30.md`); kategorier utan citerbar källa strukna.
+- Fynd: kläder 1–20 kg per plagg ger lågt netto nära noll (22 kg för 1 200 plagg), resorna för den icke-ersättande andelen äter upp den låga nyttan.
+- → Nästa: väntar på Henric: namn/adress (klimatnytta.henricbarkman.se), Swinga i sidfoten, ersättningsandel 50 % eller Blockets 40 %, bilfaktor 0,17 (NV, inkl. bränsleproduktion) eller 0,138. Sedan: tester mot handräknade exempel, granskning, deploy till Cloudflare Pages, inbäddningsläge.
